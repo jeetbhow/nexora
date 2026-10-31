@@ -3,17 +3,24 @@
 #include <algorithm>
 #include <memory>
 #include <ranges>
+#include <utility>
 
 using namespace std;
 
 namespace http {
     namespace {
+        // Views borrow the caller's path and are used only during the current operation.
+        auto segments(string_view path) {
+            return path.substr(1) |
+                views::split('/') |
+                views::transform([](auto part) { return string_view(part.begin(), part.end()); });
+        }
+
         bool valid_pattern(string_view path) {
             if (!valid_path(path)) {
                 return false;
             }
-            for (auto part : path.substr(1) | views::split('/')) {
-                auto key = string_view(part.begin(), part.end());
+            for (auto key : segments(path)) {
                 // Reject parameters with no name (a bare ':').
                 // Reject wildcard segments until wildcard support is implemented.
                 if (key == ":" || key.starts_with('*')) {
@@ -22,12 +29,46 @@ namespace http {
             }
             return true;
         }
+
+        template <typename Node>
+        struct PatternLookup {
+            Node* node;
+            vector<string_view> param_ids;
+        };
+
+        // Preserve the root's constness so contains() and remove() share one walk.
+        template <typename Node>
+        PatternLookup<Node> find_pattern(Node* node, string_view path) {
+            PatternLookup<Node> result{node, {}};
+            if (!valid_pattern(path)) {
+                result.node = nullptr;
+                return result;
+            }
+
+            for (auto key : segments(path)) {
+                if (key.starts_with(':')) {
+                    result.param_ids.push_back(key.substr(1));
+                    result.node = result.node->get_param_child();
+                } else {
+                    result.node = result.node->get_child(key);
+                }
+
+                if (!result.node) {
+                    break;
+                }
+            }
+            return result;
+        }
     }
 
     RouterNode::RouterNode(std::string_view key) : key(key) {}
 
     // Get a child if it exists. Otherwise, return `nullptr`.
     RouterNode* RouterNode::get_child(std::string_view key) {
+        return const_cast<RouterNode*>(as_const(*this).get_child(key));
+    }
+
+    const RouterNode* RouterNode::get_child(std::string_view key) const {
         auto it = ranges::find(children, key, &RouterNode::key);
         return it != children.end() ? it->get() : nullptr;
     }
@@ -58,6 +99,14 @@ namespace http {
         return param_child.get();
     }
 
+    const RouterNode* RouterNode::get_param_child() const {
+        return param_child.get();
+    }
+
+    bool RouterNode::empty() const {
+        return children.empty() && !param_child && handlers.empty();
+    }
+
     // Get the param child if it exists, otherwise create it, set its parent to this node and return it.
     RouterNode* RouterNode::get_or_create_param_child() {
         if (param_child) {
@@ -69,45 +118,49 @@ namespace http {
         return param_child.get();
     }
 
-    void RouterNode::create_child(string_view key) {
-        get_or_create_child(key);
-    }
-
-    bool RouterNode::try_add_route_handler(const RouteHandler& handler) {
+    // Add a route handler if the node has none for its method yet. Param names belong to each
+    // handler, so they play no part in the check. Return true if the operation succeeded or
+    // false if it did not.
+    bool RouterNode::try_add_route_handler(RouteHandler handler) {
         if (has_route_handler(handler.method)) {
             return false;
         }
-        handlers.push_back(handler);
+
+        handlers.push_back(std::move(handler));
         return true;
     }
 
+    // Check if the node has a handler for the method, regardless of its param ids.
     bool RouterNode::has_route_handler(Method method) const {
-        return ranges::contains(handlers, method, &RouteHandler::method);
+        return get_route_handler(method) != nullptr;
     }
 
-    bool RouterNode::has_route_handler(Method method, const vector<string_view>& param_ids) {
-        return get_route_handler(method, param_ids) != nullptr;
+    vector<RouteHandler>::const_iterator RouterNode::find_route_handler(Method method) const {
+        return ranges::find(handlers, method, &RouteHandler::method);
+    }
+
+    const RouteHandler* RouterNode::get_route_handler(Method method) const {
+        auto it = find_route_handler(method);
+        return it != handlers.end() ? &*it : nullptr;
     }
 
     const RouteHandler* RouterNode::get_route_handler(
         Method method,
         const vector<string_view>& param_ids
     ) const {
-        auto it = ranges::find_if(handlers, [&](const RouteHandler& handler) {
-            return handler.method == method && ranges::equal(handler.param_ids, param_ids);
-        });
-        return it != handlers.end() ? &*it : nullptr;
+        auto* handler = get_route_handler(method);
+        return handler && ranges::equal(handler->param_ids, param_ids) ? handler : nullptr;
     }
 
     bool RouterNode::try_remove_route_handler(
         Method method,
         const vector<string_view>& param_ids
     ) {
-        auto* handler = get_route_handler(method, param_ids);
-        if (!handler) {
+        auto it = find_route_handler(method);
+        if (it == handlers.end() || !ranges::equal(it->param_ids, param_ids)) {
             return false;
         }
-        handlers.erase(handlers.begin() + (handler - handlers.data()));
+        handlers.erase(it);
         return true;
     }
 
@@ -118,8 +171,7 @@ namespace http {
 
         vector<string> param_ids;
         RouterNode* cur = &root_;
-        for (auto part : path.substr(1) | views::split('/')) {
-            auto key = string_view(part.begin(), part.end());
+        for (auto key : segments(path)) {
             if (key.starts_with(':')) {
                 cur = cur->get_or_create_param_child();
                 param_ids.emplace_back(key.substr(1));
@@ -131,61 +183,30 @@ namespace http {
         auto handler = RouteHandler {
             .method = method,
             .handler = []() {},             // TODO: Add actual handlers.
-            .param_ids = param_ids,
+            .param_ids = std::move(param_ids),
         };
-        if (cur->try_add_route_handler(handler)) {
+        if (cur->try_add_route_handler(std::move(handler))) {
             ++size_;
         }
     }
 
-    bool Router::contains(Method method, string_view path) {
-        if (!valid_pattern(path)) {
-            return false;
-        }
-
-        vector<string_view> param_ids;
-        RouterNode* node = &root_;
-        for (auto part : path.substr(1) | views::split('/')) {
-            auto key = string_view(part.begin(), part.end());
-            if (key.starts_with(':')) {
-                param_ids.push_back(key.substr(1));
-                node = node->get_param_child();
-            } else {
-                node = node->get_child(key);
-            }
-            if (!node) {
-                return false;
-            }
-        }
-        return node->get_route_handler(method, param_ids) != nullptr;
+    bool Router::contains(Method method, string_view path) const {
+        auto [node, param_ids] = find_pattern(&root_, path);
+        return node && node->get_route_handler(method, param_ids);
     }
 
     void Router::remove(Method method, string_view path) {
-        if (!valid_pattern(path)) {
+        auto [node, param_ids] = find_pattern(&root_, path);
+        if (!node || !node->try_remove_route_handler(method, param_ids)) {
             return;
         }
 
-        vector<string_view> param_ids;
-        RouterNode* node = &root_;
-        for (auto part : path.substr(1) | views::split('/')) {
-            auto key = string_view(part.begin(), part.end());
-            if (key.starts_with(':')) {
-                param_ids.push_back(key.substr(1));
-                node = node->get_param_child();
-            } else {
-                node = node->get_child(key);
-            }
-            if (!node) {
-                return;
-            }
-        }
-        if (!node->try_remove_route_handler(method, param_ids)) {
-            return;
-        }
         --size_;
+        prune_empty_ancestors(node);
+    }
 
-        while (node->parent && node->children.empty() &&
-               !node->param_child && node->handlers.empty()) {
+    void Router::prune_empty_ancestors(RouterNode* node) {
+        while (node->parent && node->empty()) {
             auto* parent = node->parent;
             if (parent->param_child.get() == node) {
                 parent->param_child.reset();
@@ -196,7 +217,7 @@ namespace http {
         }
     }
 
-    bool Router::match(Method method, string_view target) {
+    bool Router::match(Method method, string_view target) const {
         if (!valid_path(target)) {
             return false;
         }
@@ -206,7 +227,7 @@ namespace http {
     // Recursively match the rest of `target` against the subtree rooted at `node`. Return the
     // node that ends the match, or `nullptr` if no route for `method` ends there. The static
     // child is tried first; the param child is tried whenever the static branch fails.
-    RouterNode* Router::match(RouterNode* node, Method method, string_view target) {
+    const RouterNode* Router::match(const RouterNode* node, Method method, string_view target) {
         if (!node) {
             return nullptr;
         }
@@ -219,7 +240,7 @@ namespace http {
         string_view key = target.substr(0, pos);
         string_view remain = pos != string_view::npos ? target.substr(pos + 1) : "";
 
-        RouterNode* matched = match(node->get_child(key), method, remain);
+        const RouterNode* matched = match(node->get_child(key), method, remain);
         return matched ? matched : match(node->get_param_child(), method, remain);
     }
 

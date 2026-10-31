@@ -328,7 +328,7 @@ TEST_F(RouterTest, MatchTreatsPatternSyntaxAsLiteralTargetValues) {
     router.add(Method::Get, "/:id");
     router.add(Method::Get, "/a/:id/b");
 
-    Router& read_only = router;
+    const Router& read_only = router;
     for (const auto value : {":", ":name", "*", "*rest"}) {
         SCOPED_TRACE(value);
         EXPECT_TRUE(read_only.match(Method::Get, std::string("/") + value));

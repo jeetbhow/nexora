@@ -89,7 +89,7 @@ namespace http {
     private:
         friend class ::RouterTest;
 
-        static const RouterNode* match(const RouterNode* node, Method method, std::string_view target);
+        static const RouterNode* match(const RouterNode* node, Method method, std::string_view target, std::vector<std::string_view>& param_vals);
         static void prune_empty_ancestors(RouterNode* node);
 
         /// The root of the trie. All potential routes branch off of this node.

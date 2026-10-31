@@ -221,13 +221,20 @@ namespace http {
         if (!valid_path(target)) {
             return false;
         }
-        return match(&root_, method, target.substr(1)) != nullptr;
+        
+        vector<string_view> param_vals; 
+        return match(&root_, method, target.substr(1), param_vals) != nullptr;
     }
 
     // Recursively match the rest of `target` against the subtree rooted at `node`. Return the
     // node that ends the match, or `nullptr` if no route for `method` ends there. The static
     // child is tried first; the param child is tried whenever the static branch fails.
-    const RouterNode* Router::match(const RouterNode* node, Method method, string_view target) {
+    const RouterNode* Router::match(
+        const RouterNode* node, 
+        Method method, 
+        string_view target, 
+        vector<string_view>& param_vals
+    ) {
         if (!node) {
             return nullptr;
         }
@@ -240,8 +247,17 @@ namespace http {
         string_view key = target.substr(0, pos);
         string_view remain = pos != string_view::npos ? target.substr(pos + 1) : "";
 
-        const RouterNode* matched = match(node->get_child(key), method, remain);
-        return matched ? matched : match(node->get_param_child(), method, remain);
+        if (const RouterNode* matched = match(node->get_child(key), method, remain, param_vals)) {
+            return matched;
+        }
+        
+        param_vals.push_back(key);
+        if (const RouterNode* matched =  match(node->get_param_child(), method, remain, param_vals)) {
+            return matched;
+        }
+        param_vals.pop_back(); 
+
+        return nullptr;
     }
 
     bool valid_path(std::string_view path) {

@@ -2,52 +2,52 @@
 
 #include "http/http.hpp"
 
+#include <functional>
 #include <string>
 #include <vector>
 #include <string_view>
 #include <memory>
-#include <optional>
-
-/**
- * GET /hello/:param/world
- * GET /hello/my/world
- */
 
 // Test fixture that is allowed to inspect the router's trie.
 class RouterTest;
 
 namespace http {
-    struct Route {
-        std::vector<Method> methods;
-        std::string path;
-
-        // Return true if the route has the method associated with it.
-        bool has_method(Method method);
-
-        // Remove a method from the route.
-        void remove_method(Method method);
+    struct RouteHandler {
+        Method method;
+        std::function<void()> handler;
+        std::vector<std::string> param_ids;
     };
+
 
     /**
      * @brief A single node in the router's trie.
      * 
      */
-    struct RouteNode {
-        RouteNode() = default;
-        RouteNode(const std::string& v, RouteNode* p = nullptr) : value(v), parent(p) {};
+    class RouterNode {
+    public:
+        RouterNode() = default;
+        RouterNode(std::string_view key);
 
-        std::string value;
+        // Children Methods
+        RouterNode* get_child(std::string_view key);
+        RouterNode* get_or_create_child(std::string_view key);
+        RouterNode* get_param_child();
+        RouterNode* get_or_create_param_child();
+        bool try_remove_child(std::string_view key);
+        void create_child(std::string_view key);
 
-        // The node this one hangs off of. Null for the root.
-        RouteNode* parent = nullptr;
-        std::vector<std::unique_ptr<RouteNode>> children{};
-        std::optional<Route> route;
-        
-        // Get a child node.
-        RouteNode* get_child(std::string_view key);
+        // Route Handler Methods
+        bool has_route_handler(Method method) const;
+        bool has_route_handler(Method method, const std::vector<std::string_view>& param_ids);
+        const RouteHandler* get_route_handler(Method method, const std::vector<std::string_view>& param_ids) const;
+        bool try_add_route_handler(const RouteHandler& handler);
+        bool try_remove_route_handler(Method method, const std::vector<std::string_view>& param_ids);
 
-        // Remove a child node
-        void remove_child(std::string_view val);
+        RouterNode* parent = nullptr;
+        std::vector<std::unique_ptr<RouterNode>> children{};
+        std::unique_ptr<RouterNode> param_child = nullptr;
+        std::vector<RouteHandler> handlers;
+        std::string key = "";
     };
 
     /**
@@ -57,17 +57,23 @@ namespace http {
     class Router {
     public:
         Router() = default;
+        Router(Router&&) = delete;
+        Router& operator=(Router&&) = delete;
+        Router(const Router&) = delete;
+        Router& operator=(const Router&) = delete;
 
-        // Add a route. Invalid paths are ignored.
+        // Add a route pattern. Invalid patterns, including unsupported wildcards, are ignored.
         void add(Method method, std::string_view path);
 
-        // Remove a route if it exists. If the path is invalid then reject it.
+        // Remove an exact registered pattern, including its parameter names.
         void remove(Method method, std::string_view path);
 
-        // Check if a route exists. Invalid paths return false.
+        // Check an exact registered pattern, including its parameter names.
+        // Invalid patterns return false.
         bool contains(Method method, std::string_view path);
 
-        // Match a target against a route. Invalid targets return false.
+        // Match a concrete path, trying static branches before parameter branches.
+        // Parameter names play no part in matching. Invalid paths return false.
         bool match(Method method, std::string_view target);
 
         // Return the number of routes.
@@ -76,11 +82,13 @@ namespace http {
     private:
         friend class ::RouterTest;
 
-        RouteNode* find(std::string_view path, bool insert = false);
-        RouteNode* match(RouteNode* node, std::string_view target);
+        RouterNode* match(RouterNode* node, Method method, std::string_view target);
 
         /// The root of the trie. All potential routes branch off of this node.
-        std::unique_ptr<RouteNode> root_;
+        RouterNode root_{""};
         size_t size_ = 0;
     };
+
+    // Validate the structure of a concrete path; ':' and '*' are ordinary target characters.
+    bool valid_path(std::string_view path);
 }

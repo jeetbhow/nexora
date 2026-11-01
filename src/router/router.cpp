@@ -114,13 +114,14 @@ namespace http {
         }
     }
 
-    bool Router::match(Method method, string_view target) const {
+    const Handler* Router::match(Method method, string_view target) const {
         if (!valid_path(target)) {
-            return false;
+            return nullptr;
         }
 
         vector<string_view> param_vals;
-        return match(&root_, method, target.substr(1), param_vals) != nullptr;
+        const Node* node = match(&root_, method, target.substr(1), param_vals);
+        return node ? node->get_route_handler(method) : nullptr;
     }
 
     // Recursively match the rest of `target` against the subtree rooted at

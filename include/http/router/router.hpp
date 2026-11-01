@@ -34,9 +34,11 @@ namespace http {
         bool contains(Method method, std::string_view path) const;
 
         // Match a concrete path, trying static, parameter, then wildcard
-        // branches. Parameter names play no part in matching. Invalid paths
-        // return false. Unnamed wildcards do not add parameter captures.
-        bool match(Method method, std::string_view target) const;
+        // branches. Parameter names play no part in matching. Return the
+        // matched route's handler, or nullptr for an invalid path or no match.
+        // The pointer stays valid until that route is removed. Unnamed
+        // wildcards do not add parameter captures.
+        const Handler* match(Method method, std::string_view target) const;
 
         // Return the number of routes.
         size_t size() const { return size_; }

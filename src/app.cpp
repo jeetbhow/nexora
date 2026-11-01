@@ -3,6 +3,7 @@
 
 #include <utility>
 
+using namespace std;
 using namespace http;
 
 void App::get(std::string_view path, std::function<void(http::Request&)> handler) {
@@ -34,11 +35,17 @@ void App::options(std::string_view path, std::function<void(http::Request&)> han
 }
 
 void App::route(http::Method method, std::string_view target) {
-    auto result = router.match(method, target);
+    optional<MatchResult> result = router.match(method, target);
     if (!result) {
         return;
     }
 
     auto req = Request{};
+    for (size_t i = 0; i < result->param_vals.size(); i++) {
+        const string& key = result->route->param_ids[i];
+        const string& val = result->param_vals[i];
+        req.params[std::move(key)] = std::move(val);
+    }
+
     result->route->handler(req);
 }

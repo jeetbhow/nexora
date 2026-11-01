@@ -71,7 +71,7 @@ namespace http {
 
     // The member is named to_string, so the free overloads need qualifying.
     string Request::to_string() const {
-        // The query and headers are nested one level deep, so indent their
+        // The params, query and headers are nested one level deep, so indent their
         // later lines.
         auto indent = [](string s) {
             for (size_t pos = 0; (pos = s.find('\n', pos)) != string::npos; pos += 3) {
@@ -89,6 +89,7 @@ namespace http {
         result += field("method", json_quote(http::to_string(method)));
         result += field("path", json_quote(path));
         result += field("version", json_quote(http::to_string(version)));
+        result += field("params", indent(http::to_string(params)));
         result += field("query", indent(http::to_string(query_params)));
         result += field("headers", indent(http::to_string(headers.fields)));
         result += "  \"body\": " + json_quote(body) + "\n}";

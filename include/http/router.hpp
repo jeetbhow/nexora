@@ -3,10 +3,10 @@
 #include "http/http.hpp"
 
 #include <functional>
-#include <string>
-#include <vector>
-#include <string_view>
 #include <memory>
+#include <string>
+#include <string_view>
+#include <vector>
 
 // Test fixture that is allowed to inspect the router's trie.
 class RouterTest;
@@ -18,10 +18,9 @@ namespace http {
         std::vector<std::string> param_ids;
     };
 
-
     /**
      * @brief A single node in the router's trie.
-     * 
+     *
      */
     class RouterNode {
     public:
@@ -41,14 +40,19 @@ namespace http {
         // Route Handler Methods
         bool has_route_handler(Method method) const;
         const RouteHandler* get_route_handler(Method method) const;
-        const RouteHandler* get_route_handler(Method method, const std::vector<std::string_view>& param_ids) const;
+        const RouteHandler* get_route_handler(
+            Method method, const std::vector<std::string_view>& param_ids
+        ) const;
         bool try_add_route_handler(RouteHandler handler);
-        bool try_remove_route_handler(Method method, const std::vector<std::string_view>& param_ids);
+        bool try_remove_route_handler(
+            Method method, const std::vector<std::string_view>& param_ids
+        );
 
     private:
         friend class Router;
 
-        std::vector<RouteHandler>::const_iterator find_route_handler(Method method) const;
+        std::vector<RouteHandler>::const_iterator
+        find_route_handler(Method method) const;
 
         RouterNode* parent = nullptr;
         std::vector<std::unique_ptr<RouterNode>> children{};
@@ -58,8 +62,8 @@ namespace http {
     };
 
     /**
-     * @brief Matches targets to routes. 
-     * 
+     * @brief Matches targets to routes.
+     *
      */
     class Router {
     public:
@@ -69,7 +73,8 @@ namespace http {
         Router(const Router&) = delete;
         Router& operator=(const Router&) = delete;
 
-        // Add a route pattern. Invalid patterns, including unsupported wildcards, are ignored.
+        // Add a route pattern. Invalid patterns, including unsupported
+        // wildcards, are ignored.
         void add(Method method, std::string_view path);
 
         // Remove an exact registered pattern, including its parameter names.
@@ -79,8 +84,9 @@ namespace http {
         // Invalid patterns return false.
         bool contains(Method method, std::string_view path) const;
 
-        // Match a concrete path, trying static branches before parameter branches.
-        // Parameter names play no part in matching. Invalid paths return false.
+        // Match a concrete path, trying static branches before parameter
+        // branches. Parameter names play no part in matching. Invalid paths
+        // return false.
         bool match(Method method, std::string_view target) const;
 
         // Return the number of routes.
@@ -89,7 +95,12 @@ namespace http {
     private:
         friend class ::RouterTest;
 
-        static const RouterNode* match(const RouterNode* node, Method method, std::string_view target, std::vector<std::string_view>& param_vals);
+        static const RouterNode* match(
+            const RouterNode* node,
+            Method method,
+            std::string_view target,
+            std::vector<std::string_view>& param_vals
+        );
         static void prune_empty_ancestors(RouterNode* node);
 
         /// The root of the trie. All potential routes branch off of this node.
@@ -97,6 +108,7 @@ namespace http {
         size_t size_ = 0;
     };
 
-    // Validate the structure of a concrete path; ':' and '*' are ordinary target characters.
+    // Validate the structure of a concrete path; ':' and '*' are ordinary
+    // target characters.
     bool valid_path(std::string_view path);
-}
+} // namespace http

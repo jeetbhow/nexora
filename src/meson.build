@@ -6,13 +6,13 @@ lib_sources = files(
     'router/node.cpp'
 )
 
-http_lib = static_library(
-  'http',
+nexora_lib = static_library(
+  'nexora',
   lib_sources,
   include_directories: project_inc,
 )
 
-http_dep = declare_dependency(
-  link_with: http_lib,
+nexora_dep = declare_dependency(
+  link_with: nexora_lib,
   include_directories: project_inc,
 )

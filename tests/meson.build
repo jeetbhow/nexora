@@ -9,7 +9,7 @@ test_sources = files(
 unit_tests = executable(
   'unit_tests',
   test_sources,
-  dependencies: [http_dep, gtest_dep],
+  dependencies: [nexora_dep, gtest_dep],
 )
 
 test('unit', unit_tests)

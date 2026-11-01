@@ -21,4 +21,4 @@ project_inc = include_directories('include')
 subdir('src')
 subdir('tests')
 
-executable('nexora', 'main.cpp', dependencies: http_dep)
+executable('nexora', 'main.cpp', dependencies: nexora_dep)

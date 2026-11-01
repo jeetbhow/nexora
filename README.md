@@ -25,8 +25,8 @@ meson test -C build
 
 ## Layout
 
-- `include/nexora/` - public headers of the `http` library
-- `src/` - the library's sources, built as the static library `libhttp`
+- `include/nexora/` - public headers of the `nexora` library
+- `src/` - the library's sources, built as the static library `libnexora`
 - `tests/` - GoogleTest unit tests
 
 ## Roadmap

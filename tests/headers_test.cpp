@@ -6,36 +6,39 @@ using namespace std;
 using namespace http;
 
 TEST(Headers, NulloptOnNonExistentHeader) {
-    Headers h; 
+    Headers h;
 
     h.add("Host", "example.com");
 
     auto get_result = h.get("Invalid");
     vector<string> get_all_result = h.get_all("Invalid");
-    
+
     EXPECT_FALSE(get_result.has_value());
     EXPECT_TRUE(get_all_result.empty());
 }
 
 TEST(Headers, DuplicatesReturnCommaDelimitedList) {
-    Headers h; 
+    Headers h;
 
     h.add("Accept", "application/json");
     h.add("Accept", "text/html");
 
     auto get_result = h.get("Accept");
     vector<string> get_all_result = h.get_all("Accept");
-    
+
     ASSERT_TRUE(get_result.has_value());
     ASSERT_TRUE(get_all_result.size() == 2);
     EXPECT_EQ(*get_result, "application/json, text/html");
-    EXPECT_EQ(get_all_result, (vector<string>{"application/json", "text/html"}));
+    EXPECT_EQ(
+        get_all_result, (vector<string>{"application/json", "text/html"})
+    );
 }
 
 // Field names are case-insensitive (RFC 9110 §5.1).
 using CaseInsensitiveCase = tuple<string, string>;
 
-class CaseInsensitiveLookupTest : public ::testing::TestWithParam<CaseInsensitiveCase> {};
+class CaseInsensitiveLookupTest
+    : public ::testing::TestWithParam<CaseInsensitiveCase> {};
 
 TEST_P(CaseInsensitiveLookupTest, MatchesRegardlessOfCase) {
     auto [stored, lookup] = GetParam();
@@ -76,7 +79,7 @@ INSTANTIATE_TEST_SUITE_P(
 
 TEST(Headers, RemovingNonExistentHeaderNoOps) {
     Headers h;
-    
+
     h.add("Host", "example.com");
     h.remove("Invalid");
 
@@ -87,7 +90,7 @@ TEST(Headers, RemovingNonExistentHeaderNoOps) {
 
 TEST(Headers, RemovesDuplicates) {
     Headers h;
-    
+
     h.add("Host", "example.com");
     h.add("Accept", "application/json");
     h.add("Accept", "text/html");
@@ -130,7 +133,9 @@ TEST(Headers, InterleavedDuplicatesJoinInOrder) {
 
     ASSERT_TRUE(get_result.has_value());
     EXPECT_EQ(*get_result, "application/json, text/html");
-    EXPECT_EQ(get_all_result, (vector<string>{"application/json", "text/html"}));
+    EXPECT_EQ(
+        get_all_result, (vector<string>{"application/json", "text/html"})
+    );
 }
 
 TEST(Headers, EmptyValueIsDistinctFromMissing) {

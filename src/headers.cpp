@@ -40,4 +40,4 @@ namespace http {
             return case_insensitive_equals(name, p.first);
         });
     }
-}
+} // namespace http

@@ -15,13 +15,13 @@ namespace http {
      * Requests using any other method are rejected with 501 Not Implemented.
      */
     enum class Method {
-        Get,        ///< Retrieve a resource.
-        Head,       ///< Like GET, but the response carries no body.
-        Post,       ///< Submit data to a resource.
-        Put,        ///< Replace a resource.
-        Delete,     ///< Remove a resource.
-        Patch,      ///< Partially modify a resource.
-        Options     ///< Describe the communication options for a resource.
+        Get,    ///< Retrieve a resource.
+        Head,   ///< Like GET, but the response carries no body.
+        Post,   ///< Submit data to a resource.
+        Put,    ///< Replace a resource.
+        Delete, ///< Remove a resource.
+        Patch,  ///< Partially modify a resource.
+        Options ///< Describe the communication options for a resource.
     };
 
     /**
@@ -35,11 +35,12 @@ namespace http {
     /**
      * @brief HTTP protocol versions supported by the server.
      *
-     * Requests using any other version are rejected with 505 HTTP Version Not Supported.
+     * Requests using any other version are rejected with 505 HTTP Version Not
+     * Supported.
      */
     enum class Version {
-        Http10,     ///< HTTP/1.0
-        Http11      ///< HTTP/1.1
+        Http10, ///< HTTP/1.0
+        Http11  ///< HTTP/1.1
     };
 
     /**
@@ -113,9 +114,11 @@ namespace http {
      * @brief Reasons a request can fail to parse.
      */
     enum class ParseError {
-        BadRequest,             ///< Malformed request. Respond with 400 Bad Request.
-        UnsupportedMethod,      ///< Method isn't one of `Method`. Respond with 501 Not Implemented.
-        UnsupportedVersion      ///< Version isn't one of `Version`. Respond with 505 HTTP Version Not Supported.
+        BadRequest,        ///< Malformed request. Respond with 400 Bad Request.
+        UnsupportedMethod, ///< Method isn't one of `Method`. Respond with 501
+                           ///< Not Implemented.
+        UnsupportedVersion ///< Version isn't one of `Version`. Respond with 505
+                           ///< HTTP Version Not Supported.
     };
 
     /**
@@ -137,4 +140,4 @@ namespace http {
     std::expected<Request, ParseError> parse_request(std::string_view request);
 
     std::optional<Method> parse_method(std::string_view s);
-}
+} // namespace http

@@ -12,25 +12,39 @@ using namespace std;
 namespace http {
     optional<Method> parse_method(string_view s) {
         // Methods are case-sensitive (RFC 9110 §9.1), so "get" is not GET.
-        if (s == "GET") return Method::Get;
-        if (s == "HEAD") return Method::Head;
-        if (s == "POST") return Method::Post;
-        if (s == "PUT") return Method::Put;
-        if (s == "DELETE") return Method::Delete;
-        if (s == "PATCH") return Method::Patch;
-        if (s == "OPTIONS") return Method::Options;
+        if (s == "GET")
+            return Method::Get;
+        if (s == "HEAD")
+            return Method::Head;
+        if (s == "POST")
+            return Method::Post;
+        if (s == "PUT")
+            return Method::Put;
+        if (s == "DELETE")
+            return Method::Delete;
+        if (s == "PATCH")
+            return Method::Patch;
+        if (s == "OPTIONS")
+            return Method::Options;
         return nullopt;
     }
 
     string_view to_string(Method method) {
         switch (method) {
-            case Method::Get: return "GET";
-            case Method::Head: return "HEAD";
-            case Method::Post: return "POST";
-            case Method::Put: return "PUT";
-            case Method::Delete: return "DELETE";
-            case Method::Patch: return "PATCH";
-            case Method::Options: return "OPTIONS";
+            case Method::Get:
+                return "GET";
+            case Method::Head:
+                return "HEAD";
+            case Method::Post:
+                return "POST";
+            case Method::Put:
+                return "PUT";
+            case Method::Delete:
+                return "DELETE";
+            case Method::Patch:
+                return "PATCH";
+            case Method::Options:
+                return "OPTIONS";
         }
         unreachable();
     }
@@ -47,28 +61,36 @@ namespace http {
 
     static string_view to_string(Version version) {
         switch (version) {
-            case Version::Http10: return "HTTP/1.0";
-            case Version::Http11: return "HTTP/1.1";
+            case Version::Http10:
+                return "HTTP/1.0";
+            case Version::Http11:
+                return "HTTP/1.1";
         }
         unreachable();
     }
 
     // The member is named to_string, so the free overloads need qualifying.
     string Request::to_string() const {
-        // The query and headers are nested one level deep, so indent their later lines.
+        // The query and headers are nested one level deep, so indent their
+        // later lines.
         auto indent = [](string s) {
-            for (size_t pos = 0; (pos = s.find('\n', pos)) != string::npos; pos += 3) {
+            for (size_t pos = 0; (pos = s.find('\n', pos)) != string::npos;
+                 pos += 3) {
                 s.insert(pos + 1, "  ");
             }
             return s;
         };
 
         string result = "{\n";
-        result += "  \"method\": " + json_quote(http::to_string(method)) + ",\n";
+        result +=
+            "  \"method\": " + json_quote(http::to_string(method)) + ",\n";
         result += "  \"path\": " + json_quote(path) + ",\n";
-        result += "  \"version\": " + json_quote(http::to_string(version)) + ",\n";
-        result += "  \"query\": " + indent(http::to_string(query_params)) + ",\n";
-        result += "  \"headers\": " + indent(http::to_string(headers.fields)) + ",\n";
+        result +=
+            "  \"version\": " + json_quote(http::to_string(version)) + ",\n";
+        result +=
+            "  \"query\": " + indent(http::to_string(query_params)) + ",\n";
+        result +=
+            "  \"headers\": " + indent(http::to_string(headers.fields)) + ",\n";
         result += "  \"body\": " + json_quote(body) + "\n}";
         return result;
     }
@@ -76,19 +98,23 @@ namespace http {
     // HTTP-version = "HTTP/" DIGIT "." DIGIT
     static bool is_http_version(string_view s) {
         auto is_digit = [](char c) { return c >= '0' && c <= '9'; };
-        return s.size() == 8 && s.starts_with("HTTP/") && is_digit(s[5]) && s[6] == '.' && is_digit(s[7]);
+        return s.size() == 8 && s.starts_with("HTTP/") && is_digit(s[5]) &&
+               s[6] == '.' && is_digit(s[7]);
     }
 
     static optional<Version> parse_version(string_view s) {
-        if (s == "HTTP/1.0") return Version::Http10;
-        if (s == "HTTP/1.1") return Version::Http11;
+        if (s == "HTTP/1.0")
+            return Version::Http10;
+        if (s == "HTTP/1.1")
+            return Version::Http11;
         return nullopt;
     }
 
     // tchar = "!" / "#" / "$" / "%" / "&" / "'" / "*" / "+" / "-" / "." /
     //         "^" / "_" / "`" / "|" / "~" / DIGIT / ALPHA (RFC 9110 §5.6.2)
     static bool is_tchar(char c) {
-        return isalnum(static_cast<unsigned char>(c)) || "!#$%&'*+-.^_`|~"sv.contains(c);
+        return isalnum(static_cast<unsigned char>(c)) ||
+               "!#$%&'*+-.^_`|~"sv.contains(c);
     }
 
     // `lines` is the header section without the empty line that ends it, so
@@ -100,12 +126,14 @@ namespace http {
             size_t line_end = lines.find("\r\n");
             string_view line = lines.substr(0, line_end);
 
-            // This removes the current line being processed from `lines` in place. A 
-            // while loop ends when `lines` becomes empty. Since a `string_view` does
-            // not take ownership, the underlying string is preserved.
+            // This removes the current line being processed from `lines` in
+            // place. A while loop ends when `lines` becomes empty. Since a
+            // `string_view` does not take ownership, the underlying string is
+            // preserved.
             lines.remove_prefix(line_end + 2);
 
-            optional<pair<string_view, string_view>> field = split_once(line, ':');
+            optional<pair<string_view, string_view>> field =
+                split_once(line, ':');
             if (!field) {
                 return unexpected(ParseError::BadRequest);
             }
@@ -144,7 +172,8 @@ namespace http {
                 return unexpected(ParseError::BadRequest);
             }
 
-            optional<unsigned char> byte = parse_number<unsigned char>(s.substr(i + 1, 2), 16);
+            optional<unsigned char> byte =
+                parse_number<unsigned char>(s.substr(i + 1, 2), 16);
             if (!byte) {
                 return unexpected(ParseError::BadRequest);
             }
@@ -156,14 +185,15 @@ namespace http {
     }
 
     static expected<string, ParseError> decode_query_component(string_view s) {
-        // Form encoding sends spaces as '+'. Replace them before percent-decoding
-        // so an encoded "%2B" survives as a literal '+'.
+        // Form encoding sends spaces as '+'. Replace them before
+        // percent-decoding so an encoded "%2B" survives as a literal '+'.
         string with_spaces(s);
         ranges::replace(with_spaces, '+', ' ');
         return decode_percent(with_spaces);
     }
 
-    static expected<unordered_map<string, string>, ParseError> parse_query_params(string_view query) {
+    static expected<unordered_map<string, string>, ParseError>
+    parse_query_params(string_view query) {
         unordered_map<string, string> result;
 
         for (auto part : query | views::split('&')) {
@@ -174,8 +204,10 @@ namespace http {
                 continue;
             }
 
-            // A key without '=' (e.g. "?flag") has an empty value, as in Express.
-            auto [raw_key, raw_val] = split_once(param, '=').value_or(pair{param, ""sv});
+            // A key without '=' (e.g. "?flag") has an empty value, as in
+            // Express.
+            auto [raw_key, raw_val] =
+                split_once(param, '=').value_or(pair{param, ""sv});
 
             expected<string, ParseError> key = decode_query_component(raw_key);
             expected<string, ParseError> val = decode_query_component(raw_val);
@@ -207,9 +239,10 @@ namespace http {
             string_view path;
             unordered_map<string, string> query_params;
         };
-    }
+    } // namespace
 
-    static expected<RequestLine, ParseError> parse_request_line(string_view line) {
+    static expected<RequestLine, ParseError>
+    parse_request_line(string_view line) {
         vector<string_view> parts;
         for (auto part : line | views::split(' ')) {
             parts.emplace_back(part.begin(), part.end());
@@ -217,7 +250,8 @@ namespace http {
 
         // Parts are separated by exactly one space, so a doubled or leading
         // space shows up as an empty part.
-        if (parts.size() != 3 || ranges::any_of(parts, [](string_view p) { return p.empty(); })) {
+        if (parts.size() != 3 ||
+            ranges::any_of(parts, [](string_view p) { return p.empty(); })) {
             return unexpected(ParseError::BadRequest);
         }
 
@@ -225,7 +259,8 @@ namespace http {
         string_view target = parts[1];
         string_view version_str = parts[2];
 
-        // Check syntax before support, so "GET / garbage" is 400 rather than 505.
+        // Check syntax before support, so "GET / garbage" is 400 rather than
+        // 505.
         if (!is_http_version(version_str)) {
             return unexpected(ParseError::BadRequest);
         }
@@ -247,12 +282,14 @@ namespace http {
         // A target without a '?' is all path and has an empty query.
         string_view path = target;
         string_view query;
-        if (optional<pair<string_view, string_view>> split = split_once(target, '?')) {
+        if (optional<pair<string_view, string_view>> split =
+                split_once(target, '?')) {
             path = split->first;
             query = split->second;
         }
 
-        expected<unordered_map<string, string>, ParseError> query_params = parse_query_params(query);
+        expected<unordered_map<string, string>, ParseError> query_params =
+            parse_query_params(query);
         if (!query_params) {
             return unexpected(query_params.error());
         }
@@ -261,13 +298,15 @@ namespace http {
     }
 
     // `rest` is everything after the empty line that ends the header section.
-    static expected<string, ParseError> parse_body(string_view rest, const Headers& headers) {
+    static expected<string, ParseError>
+    parse_body(string_view rest, const Headers& headers) {
         optional<string> content_length_header = headers.get("Content-Length");
         if (!content_length_header) {
             return string();
         }
 
-        optional<size_t> content_length = parse_number<size_t>(*content_length_header);
+        optional<size_t> content_length =
+            parse_number<size_t>(*content_length_header);
         if (!content_length) {
             return unexpected(ParseError::BadRequest);
         }
@@ -286,7 +325,8 @@ namespace http {
             return unexpected(ParseError::BadRequest);
         }
 
-        expected<RequestLine, ParseError> line = parse_request_line(request.substr(0, request_line_end));
+        expected<RequestLine, ParseError> line =
+            parse_request_line(request.substr(0, request_line_end));
         if (!line) {
             return unexpected(line.error());
         }
@@ -303,14 +343,17 @@ namespace http {
             return unexpected(ParseError::BadRequest);
         }
 
-        string_view header_lines = request.substr(request_line_end + 2, headers_end - request_line_end);
+        string_view header_lines = request.substr(
+            request_line_end + 2, headers_end - request_line_end
+        );
 
         expected<Headers, ParseError> headers = parse_headers(header_lines);
         if (!headers) {
             return unexpected(headers.error());
         }
 
-        expected<string, ParseError> body = parse_body(request.substr(headers_end + 4), *headers);
+        expected<string, ParseError> body =
+            parse_body(request.substr(headers_end + 4), *headers);
         if (!body) {
             return unexpected(body.error());
         }
@@ -325,4 +368,4 @@ namespace http {
 
         return r;
     }
-}
+} // namespace http

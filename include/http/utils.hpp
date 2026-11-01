@@ -57,7 +57,8 @@ namespace http {
      * @return The parts before and after `delim`, as views into `s`, or
      *         `std::nullopt` if `s` doesn't contain `delim`.
      */
-    std::optional<std::pair<std::string_view, std::string_view>> split_once(std::string_view s, char delim);
+    std::optional<std::pair<std::string_view, std::string_view>>
+    split_once(std::string_view s, char delim);
 
     /**
      * @brief Writes a string as a JSON string literal, including the quotes.
@@ -88,7 +89,8 @@ namespace http {
      * @param map The map to format.
      * @return The JSON object, or "{}" if the map is empty.
      */
-    std::string to_string(const std::unordered_map<std::string, std::string>& map);
+    std::string
+    to_string(const std::unordered_map<std::string, std::string>& map);
 
     /**
      * @brief Formats a list of name/value pairs as a pretty-printed JSON array
@@ -107,7 +109,8 @@ namespace http {
      * @param pairs The pairs to format.
      * @return The JSON array, or "[]" if the list is empty.
      */
-    std::string to_string(const std::vector<std::pair<std::string, std::string>>& pairs);
+    std::string
+    to_string(const std::vector<std::pair<std::string, std::string>>& pairs);
 
     /**
      * @brief Parses an entire string as an integer.
@@ -137,4 +140,4 @@ namespace http {
 
         return result;
     }
-}
+} // namespace http

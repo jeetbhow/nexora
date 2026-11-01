@@ -1,17 +1,18 @@
 #pragma once
 
-#include <vector>
+#include <optional>
 #include <string>
 #include <string_view>
-#include <optional>
 #include <utility>
+#include <vector>
 
 namespace http {
     struct Headers {
         /**
          * @brief Header fields, in the order they appeared in the request.
          *
-         * Stored as a `std::vector` rather than an `std::unordered_map` because headers can have duplicates.
+         * Stored as a `std::vector` rather than an `std::unordered_map` because
+         * headers can have duplicates.
          */
         std::vector<std::pair<std::string, std::string>> fields;
 
@@ -27,7 +28,8 @@ namespace http {
          * as `Set-Cookie`; use `get_all()` for those.
          *
          * @param name The field name, e.g. "Content-Type".
-         * @return The field's value, or `std::nullopt` if no field has that name.
+         * @return The field's value, or `std::nullopt` if no field has that
+         * name.
          */
         std::optional<std::string> get(std::string_view name) const;
 
@@ -38,9 +40,12 @@ namespace http {
          * field. Use `add()` to insert one.
          *
          * @param name The field name, e.g. "Content-Type".
-         * @return The field's value, or `std::nullopt` if no field has that name.
+         * @return The field's value, or `std::nullopt` if no field has that
+         * name.
          */
-        std::optional<std::string> operator[](std::string_view name) const { return get(name); }
+        std::optional<std::string> operator[](std::string_view name) const {
+            return get(name);
+        }
 
         /**
          * @brief Looks up every value of a header field.
@@ -76,4 +81,4 @@ namespace http {
          */
         void remove(std::string_view name);
     };
-}
+} // namespace http

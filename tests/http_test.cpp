@@ -22,8 +22,9 @@ class VersionTest : public ::testing::TestWithParam<VersionCase> {};
 
 TEST_P(VersionTest, MapsVersionString) {
     auto [name, version] = GetParam();
-    string request = "GET / " + name + "\r\n"
-                                      "\r\n";
+    string request = "GET / " + name +
+                     "\r\n"
+                     "\r\n";
 
     auto r = parse_request(request);
     ASSERT_TRUE(r.has_value());
@@ -118,12 +119,12 @@ INSTANTIATE_TEST_SUITE_P(
     RequestLine,
     MalformedRequestLineTest,
     ::testing::Values(
-        "GET /\r\n\r\n",                    // missing version
-        "GET / HTTP/1.1 extra\r\n\r\n",     // extra part
-        "GET  / HTTP/1.1\r\n\r\n",          // doubled space
-        " GET / HTTP/1.1\r\n\r\n",          // leading space
-        "GET / garbage\r\n\r\n",            // malformed version, not unsupported
-        "\r\n"                              // empty line
+        "GET /\r\n\r\n",                // missing version
+        "GET / HTTP/1.1 extra\r\n\r\n", // extra part
+        "GET  / HTTP/1.1\r\n\r\n",      // doubled space
+        " GET / HTTP/1.1\r\n\r\n",      // leading space
+        "GET / garbage\r\n\r\n",        // malformed version, not unsupported
+        "\r\n"                          // empty line
     )
 );
 
@@ -161,7 +162,10 @@ TEST(HeaderFields, PreservesDuplicatesInOrder) {
     auto r = parse_request(request);
     ASSERT_TRUE(r.has_value());
 
-    EXPECT_EQ(r->headers.get_all("Accept"), (vector<string>{"application/json", "text/html"}));
+    EXPECT_EQ(
+        r->headers.get_all("Accept"),
+        (vector<string>{"application/json", "text/html"})
+    );
 }
 
 TEST(HeaderFields, ValueMayContainColon) {
@@ -194,8 +198,9 @@ class HeaderWhitespaceTest : public ::testing::TestWithParam<WhitespaceCase> {};
 
 TEST_P(HeaderWhitespaceTest, TrimsOptionalWhitespace) {
     auto [line, value] = GetParam();
-    string request = "GET / HTTP/1.1\r\n" + line + "\r\n"
-                                                   "\r\n";
+    string request = "GET / HTTP/1.1\r\n" + line +
+                     "\r\n"
+                     "\r\n";
 
     auto r = parse_request(request);
     ASSERT_TRUE(r.has_value());
@@ -230,16 +235,18 @@ INSTANTIATE_TEST_SUITE_P(
     HeaderFields,
     MalformedHeaderTest,
     ::testing::Values(
-        "GET / HTTP/1.1\r\nHost example.com\r\n\r\n",                   // missing colon
-        "GET / HTTP/1.1\r\nHost : example.com\r\n\r\n",                 // space before colon
-        "GET / HTTP/1.1\r\n: example.com\r\n\r\n",                      // empty name
-        "GET / HTTP/1.1\r\nHost: example.com\r\n folded\r\n\r\n",       // obsolete line folding
-        "GET / HTTP/1.1\r\nX(Bad): value\r\n\r\n",                      // non-token name
-        "GET / HTTP/1.1\r\nHost: a\nAccept: b\r\n\r\n",                 // bare LF line ending
-        "GET / HTTP/1.1\r\nHost: a\rAccept: b\r\n\r\n",                 // bare CR in value
-        "GET / HTTP/1.1\r\nHost: a\0b\r\n\r\n"s,                        // NUL in value
-        "GET / HTTP/1.1\r\nHost: example.com\r\n",                      // no empty line
-        "GET / HTTP/1.1\r\n"                                            // no empty line, no headers
+        "GET / HTTP/1.1\r\nHost example.com\r\n\r\n",   // missing colon
+        "GET / HTTP/1.1\r\nHost : example.com\r\n\r\n", // space before colon
+        "GET / HTTP/1.1\r\n: example.com\r\n\r\n",      // empty name
+        "GET / HTTP/1.1\r\nHost: example.com\r\n folded\r\n\r\n", // obsolete
+                                                                  // line
+                                                                  // folding
+        "GET / HTTP/1.1\r\nX(Bad): value\r\n\r\n",      // non-token name
+        "GET / HTTP/1.1\r\nHost: a\nAccept: b\r\n\r\n", // bare LF line ending
+        "GET / HTTP/1.1\r\nHost: a\rAccept: b\r\n\r\n", // bare CR in value
+        "GET / HTTP/1.1\r\nHost: a\0b\r\n\r\n"s,        // NUL in value
+        "GET / HTTP/1.1\r\nHost: example.com\r\n",      // no empty line
+        "GET / HTTP/1.1\r\n" // no empty line, no headers
     )
 );
 
@@ -260,22 +267,21 @@ class ContentLengthValueTest : public ::testing::TestWithParam<string> {};
 TEST_P(ContentLengthValueTest, ErrorOnInvalidContentLength) {
     string value = GetParam();
 
-    string request = format("POST / HTTP/1.1\r\n"
-                     "Host: example.com\r\n"
-                     "Content-Length: {}\r\n"
-                     "\r\n"
-                     "body", value);
+    string request = format(
+        "POST / HTTP/1.1\r\n"
+        "Host: example.com\r\n"
+        "Content-Length: {}\r\n"
+        "\r\n"
+        "body",
+        value
+    );
 
     expected<Request, ParseError> r = parse_request(request);
     EXPECT_FALSE(r.has_value());
 }
 
 INSTANTIATE_TEST_SUITE_P(
-    Body,
-    ContentLengthValueTest,
-    ::testing::Values(
-        "-2", "", "5"
-    )
+    Body, ContentLengthValueTest, ::testing::Values("-2", "", "5")
 );
 
 TEST(Body, MissingContentLengthSkipsBody) {
@@ -461,8 +467,9 @@ class QueryPlusTest : public ::testing::TestWithParam<PlusCase> {};
 
 TEST_P(QueryPlusTest, DecodesPlusAsSpace) {
     auto [query, key, value] = GetParam();
-    string request = "GET /search?" + query + " HTTP/1.1\r\n"
-                                              "\r\n";
+    string request = "GET /search?" + query +
+                     " HTTP/1.1\r\n"
+                     "\r\n";
 
     expected<Request, ParseError> r = parse_request(request);
 
@@ -475,10 +482,10 @@ INSTANTIATE_TEST_SUITE_P(
     QueryParams,
     QueryPlusTest,
     ::testing::Values(
-        PlusCase{"q=hello+world", "q", "hello world"},     // plus in a value
-        PlusCase{"first+name=Ada", "first name", "Ada"},   // plus in a key
-        PlusCase{"q=a%2Bb", "q", "a+b"},                   // encoded plus stays literal
-        PlusCase{"q=a+%2B+b", "q", "a + b"}                // both together
+        PlusCase{"q=hello+world", "q", "hello world"},   // plus in a value
+        PlusCase{"first+name=Ada", "first name", "Ada"}, // plus in a key
+        PlusCase{"q=a%2Bb", "q", "a+b"},    // encoded plus stays literal
+        PlusCase{"q=a+%2B+b", "q", "a + b"} // both together
     )
 );
 
@@ -489,8 +496,9 @@ class DecodePercentTest : public ::testing::TestWithParam<DecodeCase> {};
 // `decode_percent` is private, so these tests reach it through a query value.
 TEST_P(DecodePercentTest, DecodesEscapes) {
     auto [input, want] = GetParam();
-    string request = "GET /search?q=" + input + " HTTP/1.1\r\n"
-                                                "\r\n";
+    string request = "GET /search?q=" + input +
+                     " HTTP/1.1\r\n"
+                     "\r\n";
 
     expected<Request, ParseError> r = parse_request(request);
 
@@ -502,23 +510,26 @@ INSTANTIATE_TEST_SUITE_P(
     QueryParams,
     DecodePercentTest,
     ::testing::Values(
-        DecodeCase{"hello%20world", "hello world"},    // basic escape
-        DecodeCase{"plain", "plain"},                  // no escapes
-        DecodeCase{"", ""},                            // empty input
-        DecodeCase{"%2f%2F", "//"},                    // lower- and upper-case hex
-        DecodeCase{"a%26b%3Dc", "a&b=c"},              // reserved characters
-        DecodeCase{"caf%C3%A9", "caf\xC3\xA9"},        // bytes above 127 (UTF-8 "café")
-        DecodeCase{"100%25", "100%"},                  // literal percent
-        DecodeCase{"%2541", "%41"},                    // decodes only once
-        DecodeCase{"%41%42", "AB"}                     // back-to-back escapes
+        DecodeCase{"hello%20world", "hello world"}, // basic escape
+        DecodeCase{"plain", "plain"},               // no escapes
+        DecodeCase{"", ""},                         // empty input
+        DecodeCase{"%2f%2F", "//"},                 // lower- and upper-case hex
+        DecodeCase{"a%26b%3Dc", "a&b=c"},           // reserved characters
+        DecodeCase{
+            "caf%C3%A9", "caf\xC3\xA9"
+        },                            // bytes above 127 (UTF-8 "café")
+        DecodeCase{"100%25", "100%"}, // literal percent
+        DecodeCase{"%2541", "%41"},   // decodes only once
+        DecodeCase{"%41%42", "AB"}    // back-to-back escapes
     )
 );
 
 class DecodePercentInvalidTest : public ::testing::TestWithParam<string> {};
 
 TEST_P(DecodePercentInvalidTest, RejectsMalformedEscape) {
-    string request = "GET /search?q=" + GetParam() + " HTTP/1.1\r\n"
-                                                     "\r\n";
+    string request = "GET /search?q=" + GetParam() +
+                     " HTTP/1.1\r\n"
+                     "\r\n";
 
     expected<Request, ParseError> r = parse_request(request);
 
@@ -530,10 +541,10 @@ INSTANTIATE_TEST_SUITE_P(
     QueryParams,
     DecodePercentInvalidTest,
     ::testing::Values(
-        "%",        // percent at the end
-        "abc%",     // percent at the end after text
-        "%4",       // one hex digit
-        "%zz",      // non-hex digits
-        "%4z"       // second digit not hex
+        "%",    // percent at the end
+        "abc%", // percent at the end after text
+        "%4",   // one hex digit
+        "%zz",  // non-hex digits
+        "%4z"   // second digit not hex
     )
 );

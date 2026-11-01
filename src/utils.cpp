@@ -8,7 +8,8 @@ using namespace std;
 namespace http {
     bool case_insensitive_equals(string_view a, string_view b) {
         return ranges::equal(a, b, [](char x, char y) {
-            return tolower(static_cast<unsigned char>(x)) == tolower(static_cast<unsigned char>(y));
+            return tolower(static_cast<unsigned char>(x)) ==
+                   tolower(static_cast<unsigned char>(y));
         });
     }
 
@@ -22,7 +23,8 @@ namespace http {
         return s.substr(first, last - first + 1);
     }
 
-    optional<pair<string_view, string_view>> split_once(string_view s, char delim) {
+    optional<pair<string_view, string_view>>
+    split_once(string_view s, char delim) {
         size_t pos = s.find(delim);
         if (pos == string_view::npos) {
             return nullopt;
@@ -36,13 +38,27 @@ namespace http {
 
         for (char c : s) {
             switch (c) {
-                case '"': result += "\\\""; break;
-                case '\\': result += "\\\\"; break;
-                case '\b': result += "\\b"; break;
-                case '\f': result += "\\f"; break;
-                case '\n': result += "\\n"; break;
-                case '\r': result += "\\r"; break;
-                case '\t': result += "\\t"; break;
+                case '"':
+                    result += "\\\"";
+                    break;
+                case '\\':
+                    result += "\\\\";
+                    break;
+                case '\b':
+                    result += "\\b";
+                    break;
+                case '\f':
+                    result += "\\f";
+                    break;
+                case '\n':
+                    result += "\\n";
+                    break;
+                case '\r':
+                    result += "\\r";
+                    break;
+                case '\t':
+                    result += "\\t";
+                    break;
                 default:
                     if (static_cast<unsigned char>(c) < 0x20) {
                         constexpr string_view hex = "0123456789abcdef";
@@ -98,4 +114,4 @@ namespace http {
         result += "\n]";
         return result;
     }
-}
+} // namespace http

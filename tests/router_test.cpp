@@ -346,61 +346,61 @@ TEST_F(RouterTest, MatchInvalidPathReturnsFalse) {
 TEST_F(RouterTest, MatchRegisteredPathMatches) {
     router.add(Method::Get, "/a", noop);
 
-    bool result = router.match(Method::Get, "/a");
+    bool result = router.match(Method::Get, "/a").has_value();
     EXPECT_TRUE(result);
 }
 
 TEST_F(RouterTest, MatchRecursivePathMatches) {
     router.add(Method::Get, "/a/b", noop);
 
-    bool result = router.match(Method::Get, "/a/b");
+    bool result = router.match(Method::Get, "/a/b").has_value();
     EXPECT_TRUE(result);
 }
 
 TEST_F(RouterTest, MatchRootPathMatches) {
     router.add(Method::Get, "/", noop);
 
-    bool result = router.match(Method::Get, "/");
+    bool result = router.match(Method::Get, "/").has_value();
     EXPECT_TRUE(result);
 }
 
 TEST_F(RouterTest, MatchIntermediateNodeWithoutRouteRejects) {
     router.add(Method::Get, "/a/b", noop);
 
-    bool result = router.match(Method::Get, "/a");
+    bool result = router.match(Method::Get, "/a").has_value();
     EXPECT_FALSE(result);
 }
 
 TEST_F(RouterTest, MatchPathLongerThanRegisteredRejects) {
     router.add(Method::Get, "/a", noop);
 
-    bool result = router.match(Method::Get, "/a/b");
+    bool result = router.match(Method::Get, "/a/b").has_value();
     EXPECT_FALSE(result);
 }
 
 TEST_F(RouterTest, MatchUnregisteredPathRejects) {
     router.add(Method::Get, "/a", noop);
 
-    bool result = router.match(Method::Get, "/b");
+    bool result = router.match(Method::Get, "/b").has_value();
     EXPECT_FALSE(result);
 }
 
 TEST_F(RouterTest, MatchDifferentMethodReject) {
     router.add(Method::Get, "/a", noop);
 
-    bool result = router.match(Method::Post, "/a");
+    bool result = router.match(Method::Post, "/a").has_value();
     EXPECT_FALSE(result);
 }
 
 TEST_F(RouterTest, MatchEmptyRouterRejects) {
-    bool result = router.match(Method::Get, "/a");
+    bool result = router.match(Method::Get, "/a").has_value();
     EXPECT_FALSE(result);
 }
 
 TEST_F(RouterTest, MatchParamSegmentMatchesAnyValue) {
     router.add(Method::Get, "/:x", noop);
 
-    bool result = router.match(Method::Get, "/a");
+    bool result = router.match(Method::Get, "/a").has_value();
     EXPECT_TRUE(result);
 }
 
@@ -423,7 +423,7 @@ TEST_F(RouterTest, MatchTreatsPatternSyntaxAsLiteralTargetValues) {
 TEST_F(RouterTest, MatchParamSegmentFollowedByStaticSegmentMatches) {
     router.add(Method::Get, "/:x/b", noop);
 
-    bool result = router.match(Method::Get, "/a/b");
+    bool result = router.match(Method::Get, "/a/b").has_value();
     EXPECT_TRUE(result);
 }
 
@@ -433,8 +433,8 @@ TEST_F(RouterTest, MatchStaticSegmentTakesPriorityOverParam) {
 
     // Get is served by the static route. Post has no static handler, so it
     // falls back to the param route.
-    bool get_result = router.match(Method::Get, "/a/b");
-    bool post_result = router.match(Method::Post, "/a/b");
+    bool get_result = router.match(Method::Get, "/a/b").has_value();
+    bool post_result = router.match(Method::Post, "/a/b").has_value();
     EXPECT_TRUE(get_result);
     EXPECT_TRUE(post_result);
 }
@@ -443,21 +443,21 @@ TEST_F(RouterTest, MatchBacktracksFromStaticSegmentToParam) {
     router.add(Method::Get, "/a/b", noop);
     router.add(Method::Get, "/:x/c", noop);
 
-    bool result = router.match(Method::Get, "/a/c");
+    bool result = router.match(Method::Get, "/a/c").has_value();
     EXPECT_TRUE(result);
 }
 
 TEST_F(RouterTest, MatchParamSegmentDoesNotSpanMultipleSegments) {
     router.add(Method::Get, "/:x", noop);
 
-    bool result = router.match(Method::Get, "/a/b");
+    bool result = router.match(Method::Get, "/a/b").has_value();
     EXPECT_FALSE(result);
 }
 
 TEST_F(RouterTest, MatchMultipleParamSegmentsMatch) {
     router.add(Method::Get, "/:x/:y", noop);
 
-    bool result = router.match(Method::Get, "/a/b");
+    bool result = router.match(Method::Get, "/a/b").has_value();
     EXPECT_TRUE(result);
 }
 
@@ -465,21 +465,21 @@ TEST_F(RouterTest, MatchBacktracksMultipleLevels) {
     router.add(Method::Get, "/a/b/x", noop);
     router.add(Method::Get, "/:p/b/y", noop);
 
-    bool result = router.match(Method::Get, "/a/b/y");
+    bool result = router.match(Method::Get, "/a/b/y").has_value();
     EXPECT_TRUE(result);
 }
 
 TEST_F(RouterTest, MatchParamSegmentBetweenStaticSegmentsMatches) {
     router.add(Method::Get, "/a/:x/c", noop);
 
-    bool result = router.match(Method::Get, "/a/b/c");
+    bool result = router.match(Method::Get, "/a/b/c").has_value();
     EXPECT_TRUE(result);
 }
 
 TEST_F(RouterTest, MatchParamSegmentWithWrongStaticTailRejects) {
     router.add(Method::Get, "/a/:x/c", noop);
 
-    bool result = router.match(Method::Get, "/a/b/d");
+    bool result = router.match(Method::Get, "/a/b/d").has_value();
     EXPECT_FALSE(result);
 }
 
@@ -489,14 +489,14 @@ TEST_F(RouterTest, MatchFallsBackToParamWhenStaticNodeHasNoRoute) {
 
     // The static "a" node exists but is only an intermediate node, so "/:x"
     // serves the target.
-    bool result = router.match(Method::Get, "/a");
+    bool result = router.match(Method::Get, "/a").has_value();
     EXPECT_TRUE(result);
 }
 
 TEST_F(RouterTest, MatchIntermediateNodeWithoutParamRouteRejects) {
     router.add(Method::Get, "/a/c", noop);
 
-    bool result = router.match(Method::Get, "/a");
+    bool result = router.match(Method::Get, "/a").has_value();
     EXPECT_FALSE(result);
 }
 
@@ -520,9 +520,9 @@ TEST_F(RouterTest, MatchCapturesParamsInPathOrder) {
 
     ASSERT_NE(node, nullptr);
     EXPECT_EQ(values, (std::vector<std::string_view>{"42", "7"}));
-    ASSERT_NE(node->get_route_handler(Method::Get), nullptr);
+    ASSERT_NE(node->get_route(Method::Get), nullptr);
     EXPECT_EQ(
-        node->get_route_handler(Method::Get)->param_ids,
+        node->get_route(Method::Get)->param_ids,
         (std::vector<std::string>{"id", "post"})
     );
 }
@@ -556,7 +556,7 @@ TEST_F(RouterTest, MatchCapturesParamsForRequestedMethod) {
     ASSERT_NE(get_node, nullptr);
     EXPECT_EQ(get_values, (std::vector<std::string_view>{"42"}));
     EXPECT_EQ(
-        get_node->get_route_handler(Method::Get)->param_ids,
+        get_node->get_route(Method::Get)->param_ids,
         (std::vector<std::string>{"id"})
     );
 
@@ -566,7 +566,7 @@ TEST_F(RouterTest, MatchCapturesParamsForRequestedMethod) {
     ASSERT_NE(post_node, nullptr);
     EXPECT_EQ(post_values, (std::vector<std::string_view>{"a", "42"}));
     EXPECT_EQ(
-        post_node->get_route_handler(Method::Post)->param_ids,
+        post_node->get_route(Method::Post)->param_ids,
         (std::vector<std::string>{"prefix", "name"})
     );
 }
@@ -581,7 +581,7 @@ TEST_F(RouterTest, MatchBacktrackingDiscardsFailedBranchCaptures) {
     ASSERT_NE(node, nullptr);
     EXPECT_EQ(values, (std::vector<std::string_view>{"a", "c"}));
     EXPECT_EQ(
-        node->get_route_handler(Method::Get)->param_ids,
+        node->get_route(Method::Get)->param_ids,
         (std::vector<std::string>{"kept", "tail"})
     );
 }

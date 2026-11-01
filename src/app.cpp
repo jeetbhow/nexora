@@ -34,7 +34,11 @@ void App::options(std::string_view path, std::function<void(http::Request&)> han
 }
 
 void App::route(http::Method method, std::string_view target) {
-    const Handler* handler = router.match(method, target);
+    auto result = router.match(method, target);
+    if (!result) {
+        return;
+    }
+
     auto req = Request{};
-    handler->handle(std::move(req));
+    result->route->handler(req);
 }

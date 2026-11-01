@@ -9,11 +9,14 @@
 #include <vector>
 
 namespace http {
-    struct Handler {
+    struct Route {
         std::function<void(Request&)> handler;
         std::vector<std::string> param_ids;
+    };
 
-        void handle(Request&& req) const;
+    struct MatchResult {
+        const Route* route;
+        std::vector<std::string_view> param_vals;
     };
 
     enum class NodeType { Path, Param, Wildcard };
@@ -28,16 +31,8 @@ namespace http {
         const Node* get_child(const std::string& key) const;
         Node* get_child(const std::string& key);
 
-        // Route Handler Methods
-        bool has_route_handler(Method method) const;
-        const Handler* get_route_handler(Method method) const;
-        const Handler* get_route_handler(
-            Method method, const std::vector<std::string_view>& param_ids
-        ) const;
-        bool try_add_route_handler(Method method, Handler handler);
-        bool try_remove_route_handler(
-            Method method, const std::vector<std::string_view>& param_ids
-        );
+        const Route* get_route(Method method) const;
+        bool try_remove_route(Method method, const std::vector<std::string_view>& param_ids);
 
     private:
         friend class Router;
@@ -46,6 +41,6 @@ namespace http {
         std::string key = "";
         Node* parent = nullptr;
         std::unordered_map<std::string, Node> children{};
-        std::unordered_map<Method, Handler> handlers;
+        std::unordered_map<Method, Route> routes;
     };
 }; // namespace http

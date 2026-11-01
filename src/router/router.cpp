@@ -1,6 +1,8 @@
 #include "nexora/router/router.hpp"
 #include "nexora/router/node.hpp"
+#include "nexora/utils.hpp"
 
+#include <algorithm>
 #include <ranges>
 #include <utility>
 
@@ -20,8 +22,6 @@ namespace http {
 
         bool wildcard_seen = false;
         for (auto key : segments(path)) {
-            // Reject parameters with no name (a bare ':').
-            // Only an unnamed, terminal wildcard is supported.
             if (wildcard_seen || key == ":" || (key.starts_with('*') && key != "*")) {
                 return false;
             }
@@ -35,7 +35,6 @@ namespace http {
         vector<string_view> param_ids;
     };
 
-    // Preserve the root's constness so contains() and remove() share one walk.
     template <typename Node>
     PatternLookup<Node> find_pattern(Node* node, string_view path) {
         PatternLookup<Node> result{node, {}};
@@ -81,24 +80,30 @@ namespace http {
             cur = &cur->get_or_create_child(string(key), NodeType::Path);
         }
 
-        auto route = Handler{
+        auto route = Route{
             .handler = std::move(handler),
             .param_ids = std::move(param_ids),
         };
 
-        if (cur->try_add_route_handler(method, std::move(route))) {
+        auto [it, inserted] = cur->routes.try_emplace(method, route);
+        if (inserted) {
             ++size_;
         }
     }
 
     bool Router::contains(Method method, string_view path) const {
         auto [node, param_ids] = find_pattern(&root_, path);
-        return node && node->get_route_handler(method, param_ids);
+        if (!node) {
+            return false;
+        }
+
+        const Route* route = node->get_route(method);
+        return route && ranges::equal(route->param_ids, param_ids);
     }
 
     void Router::remove(Method method, string_view path) {
         auto [node, param_ids] = find_pattern(&root_, path);
-        if (!node || !node->try_remove_route_handler(method, param_ids)) {
+        if (!node || !node->try_remove_route(method, param_ids)) {
             return;
         }
 
@@ -107,26 +112,27 @@ namespace http {
     }
 
     void Router::prune_empty_ancestors(Node* node) {
-        while (node->parent && node->is_leaf() && node->handlers.empty()) {
+        while (node->parent && node->is_leaf() && node->routes.empty()) {
             auto* parent = node->parent;
             parent->children.erase(node->key);
             node = parent;
         }
     }
 
-    const Handler* Router::match(Method method, string_view target) const {
+    optional<MatchResult> Router::match(Method method, string_view target) const {
         if (!valid_path(target)) {
-            return nullptr;
+            return nullopt;
         }
 
         vector<string_view> param_vals;
         const Node* node = match(&root_, method, target.substr(1), param_vals);
-        return node ? node->get_route_handler(method) : nullptr;
+        if (!node) {
+            return nullopt;
+        }
+
+        return MatchResult{node->get_route(method), std::move(param_vals)};
     }
 
-    // Recursively match the rest of `target` against the subtree rooted at
-    // `node`. Return the node that ends the match, or `nullptr` if no route for
-    // `method` ends there. Try static, parameter, then wildcard branches.
     const Node* Router::match(
         const Node* node,
         Method method,
@@ -138,14 +144,15 @@ namespace http {
         }
 
         if (target.empty()) {
-            return node->has_route_handler(method) ? node : nullptr;
+            return node->routes.contains(method) ? node : nullptr;
         }
 
         size_t pos = target.find('/');
         string_view key = target.substr(0, pos);
         string_view remain = pos != string_view::npos ? target.substr(pos + 1) : "";
 
-        const Node* child = node->get_child(string(key));
+        const Node* child = get_or_default(node->children, string(key), nullptr);
+
         if (child && child->type == NodeType::Path) {
             if (const Node* matched = match(child, method, remain, param_vals)) {
                 return matched;
@@ -153,17 +160,21 @@ namespace http {
         }
 
         param_vals.push_back(key);
-        if (const Node* matched =
-                match(node->get_child(":"), method, remain, param_vals)) {
+
+        const Node* matched = match(
+            get_or_default(node->children, string(":"), nullptr),
+            method,
+            remain,
+            param_vals
+        );
+        if (matched) {
             return matched;
         }
 
         param_vals.pop_back();
 
-        // A terminal wildcard consumes the nonempty remainder without adding
-        // a named parameter capture.
-        const Node* wildcard = node->get_child("*");
-        if (wildcard && wildcard->has_route_handler(method)) {
+        const Node* wildcard = get_or_default(node->children, string("*"), nullptr);
+        if (wildcard && wildcard->routes.contains(method)) {
             return wildcard;
         }
 

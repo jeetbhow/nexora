@@ -1,4 +1,5 @@
 #include "nexora/router/node.hpp"
+#include "nexora/utils.hpp"
 
 #include <algorithm>
 #include <memory>
@@ -8,10 +9,6 @@
 using namespace std;
 
 namespace http {
-    void Handler::handle(Request&& req) const {
-        handler(req);
-    }
-
     Node::Node(std::string_view key, NodeType type) : type(type), key(key) {
     }
 
@@ -20,13 +17,11 @@ namespace http {
     }
 
     const Node* Node::get_child(const std::string& key) const {
-        auto it = children.find(key);
-        return it != children.end() ? &it->second : nullptr;
+        return get_or_default(children, key, nullptr);
     }
 
     Node* Node::get_child(const std::string& key) {
-        auto it = children.find(key);
-        return it != children.end() ? &it->second : nullptr;
+        return get_or_default(children, key, nullptr);
     }
 
     Node& Node::get_or_create_child(const string& key, NodeType type) {
@@ -49,38 +44,16 @@ namespace http {
         return it->second;
     }
 
-    // Add a route handler if the node has none for its method yet. Param names
-    // belong to each handler, so they play no part in the check. Return true if
-    // the operation succeeded or false if it did not.
-    bool Node::try_add_route_handler(Method method, Handler handler) {
-        return handlers.try_emplace(method, std::move(handler)).second;
+    const Route* Node::get_route(Method method) const {
+        return get_or_default(routes, method, nullptr);
     }
 
-    // Check if the node has a handler for the method, regardless of its param
-    // ids.
-    bool Node::has_route_handler(Method method) const {
-        return handlers.contains(method);
-    }
-
-    const Handler* Node::get_route_handler(Method method) const {
-        auto it = handlers.find(method);
-        return it != handlers.end() ? &it->second : nullptr;
-    }
-
-    const Handler*
-    Node::get_route_handler(Method method, const vector<string_view>& param_ids) const {
-        auto* handler = get_route_handler(method);
-        return handler && ranges::equal(handler->param_ids, param_ids) ? handler
-                                                                       : nullptr;
-    }
-
-    bool
-    Node::try_remove_route_handler(Method method, const vector<string_view>& param_ids) {
-        auto it = handlers.find(method);
-        if (it == handlers.end() || !ranges::equal(it->second.param_ids, param_ids)) {
+    bool Node::try_remove_route(Method method, const vector<string_view>& param_ids) {
+        auto it = routes.find(method);
+        if (it == routes.end() || !ranges::equal(it->second.param_ids, param_ids)) {
             return false;
         }
-        handlers.erase(it);
+        routes.erase(it);
         return true;
     }
 } // namespace http

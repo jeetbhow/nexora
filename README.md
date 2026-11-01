@@ -1,4 +1,4 @@
-# mininode
+# Nexora
 
 An HTTP framework for C++23 in the style of Express.js, built on raw POSIX
 sockets and epoll with no dependencies beyond the standard library. It is a
@@ -26,7 +26,7 @@ meson test -C build
 
 ## Layout
 
-- `include/http/` - public headers of the `http` library
+- `include/nexora/` - public headers of the `http` library
 - `src/` - the library's sources, built as the static library `libhttp`
 - `app/` - a CLI for request parsing and route matching
 - `tests/` - GoogleTest unit tests

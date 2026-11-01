@@ -1,6 +1,6 @@
 #pragma once
 
-#include "http/router/node.hpp"
+#include "nexora/router/node.hpp"
 
 #include <cstddef>
 #include <string_view>

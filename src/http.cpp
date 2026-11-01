@@ -1,5 +1,5 @@
-#include "http/http.hpp"
-#include "http/utils.hpp"
+#include "nexora/http.hpp"
+#include "nexora/utils.hpp"
 
 #include <algorithm>
 #include <cctype>

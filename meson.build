@@ -1,5 +1,5 @@
 project(
-  'http',
+  'Nexora',
   'cpp',
   version: '0.0.1',
   license: 'MIT',

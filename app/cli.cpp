@@ -1,5 +1,5 @@
-#include "http/http.hpp"
-#include "http/router/router.hpp"
+#include "nexora/http.hpp"
+#include "nexora/router/router.hpp"
 
 #include <CLI/CLI.hpp>
 
@@ -13,7 +13,7 @@ using namespace std;
 using namespace http;
 
 int main(int argc, char** argv) {
-    CLI::App app{"An app that tests the functionality of mininode"};
+    CLI::App app{"An app that tests the functionality of Nexora"};
     app.require_subcommand(1);
 
     CLI::App* parse_cmd =

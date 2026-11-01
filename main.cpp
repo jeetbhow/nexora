@@ -9,9 +9,13 @@ using namespace http;
 int main() {
     App app{};
 
-    app.get("/echo", [](Request& req) { cout << req.to_string() << "\n"; });
+    app.get("/echo", [](Request& req) {
+        cout << req.to_string() << "\n";
+    });
 
-    app.get("/hello", [](Request&) { cout << "Hello, world!\n"; });
+    app.get("/hello/:name", [](Request&) {
+        cout << "Hello, world!\n";
+    });
 
     app.route(Method::Get, "/hello");
 }

@@ -52,6 +52,9 @@ namespace http {
         /// The header fields.
         Headers headers;
 
+
+        std::unordered_map<std::string, std::string> params;
+
         /// The query parameters, e.g. {"sort": "asc"} for "?sort=asc".
         std::unordered_map<std::string, std::string> query_params;
 

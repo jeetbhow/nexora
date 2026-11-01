@@ -63,21 +63,17 @@ namespace http {
         return it != handlers.end() ? &it->second : nullptr;
     }
 
-    const Handler* Node::get_route_handler(
-        Method method, const vector<string_view>& param_ids
-    ) const {
+    const Handler*
+    Node::get_route_handler(Method method, const vector<string_view>& param_ids) const {
         auto* handler = get_route_handler(method);
-        return handler && ranges::equal(handler->param_ids, param_ids)
-                   ? handler
-                   : nullptr;
+        return handler && ranges::equal(handler->param_ids, param_ids) ? handler
+                                                                       : nullptr;
     }
 
-    bool Node::try_remove_route_handler(
-        Method method, const vector<string_view>& param_ids
-    ) {
+    bool
+    Node::try_remove_route_handler(Method method, const vector<string_view>& param_ids) {
         auto it = handlers.find(method);
-        if (it == handlers.end() ||
-            !ranges::equal(it->second.param_ids, param_ids)) {
+        if (it == handlers.end() || !ranges::equal(it->second.param_ids, param_ids)) {
             return false;
         }
         handlers.erase(it);

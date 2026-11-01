@@ -74,23 +74,23 @@ namespace http {
         // The query and headers are nested one level deep, so indent their
         // later lines.
         auto indent = [](string s) {
-            for (size_t pos = 0; (pos = s.find('\n', pos)) != string::npos;
-                 pos += 3) {
+            for (size_t pos = 0; (pos = s.find('\n', pos)) != string::npos; pos += 3) {
                 s.insert(pos + 1, "  ");
             }
             return s;
         };
 
+        // One `"key": value,` line; value is already JSON.
+        auto field = [](const string& key, const string& value) {
+            return "  \"" + key + "\": " + value + ",\n";
+        };
+
         string result = "{\n";
-        result +=
-            "  \"method\": " + json_quote(http::to_string(method)) + ",\n";
-        result += "  \"path\": " + json_quote(path) + ",\n";
-        result +=
-            "  \"version\": " + json_quote(http::to_string(version)) + ",\n";
-        result +=
-            "  \"query\": " + indent(http::to_string(query_params)) + ",\n";
-        result +=
-            "  \"headers\": " + indent(http::to_string(headers.fields)) + ",\n";
+        result += field("method", json_quote(http::to_string(method)));
+        result += field("path", json_quote(path));
+        result += field("version", json_quote(http::to_string(version)));
+        result += field("query", indent(http::to_string(query_params)));
+        result += field("headers", indent(http::to_string(headers.fields)));
         result += "  \"body\": " + json_quote(body) + "\n}";
         return result;
     }
@@ -98,8 +98,8 @@ namespace http {
     // HTTP-version = "HTTP/" DIGIT "." DIGIT
     static bool is_http_version(string_view s) {
         auto is_digit = [](char c) { return c >= '0' && c <= '9'; };
-        return s.size() == 8 && s.starts_with("HTTP/") && is_digit(s[5]) &&
-               s[6] == '.' && is_digit(s[7]);
+        return s.size() == 8 && s.starts_with("HTTP/") && is_digit(s[5]) && s[6] == '.' &&
+               is_digit(s[7]);
     }
 
     static optional<Version> parse_version(string_view s) {
@@ -113,8 +113,7 @@ namespace http {
     // tchar = "!" / "#" / "$" / "%" / "&" / "'" / "*" / "+" / "-" / "." /
     //         "^" / "_" / "`" / "|" / "~" / DIGIT / ALPHA (RFC 9110 §5.6.2)
     static bool is_tchar(char c) {
-        return isalnum(static_cast<unsigned char>(c)) ||
-               "!#$%&'*+-.^_`|~"sv.contains(c);
+        return isalnum(static_cast<unsigned char>(c)) || "!#$%&'*+-.^_`|~"sv.contains(c);
     }
 
     // `lines` is the header section without the empty line that ends it, so
@@ -132,8 +131,7 @@ namespace http {
             // preserved.
             lines.remove_prefix(line_end + 2);
 
-            optional<pair<string_view, string_view>> field =
-                split_once(line, ':');
+            optional<pair<string_view, string_view>> field = split_once(line, ':');
             if (!field) {
                 return unexpected(ParseError::BadRequest);
             }
@@ -206,8 +204,7 @@ namespace http {
 
             // A key without '=' (e.g. "?flag") has an empty value, as in
             // Express.
-            auto [raw_key, raw_val] =
-                split_once(param, '=').value_or(pair{param, ""sv});
+            auto [raw_key, raw_val] = split_once(param, '=').value_or(pair{param, ""sv});
 
             expected<string, ParseError> key = decode_query_component(raw_key);
             expected<string, ParseError> val = decode_query_component(raw_val);
@@ -241,8 +238,7 @@ namespace http {
         };
     } // namespace
 
-    static expected<RequestLine, ParseError>
-    parse_request_line(string_view line) {
+    static expected<RequestLine, ParseError> parse_request_line(string_view line) {
         vector<string_view> parts;
         for (auto part : line | views::split(' ')) {
             parts.emplace_back(part.begin(), part.end());
@@ -282,8 +278,7 @@ namespace http {
         // A target without a '?' is all path and has an empty query.
         string_view path = target;
         string_view query;
-        if (optional<pair<string_view, string_view>> split =
-                split_once(target, '?')) {
+        if (optional<pair<string_view, string_view>> split = split_once(target, '?')) {
             path = split->first;
             query = split->second;
         }
@@ -305,8 +300,7 @@ namespace http {
             return string();
         }
 
-        optional<size_t> content_length =
-            parse_number<size_t>(*content_length_header);
+        optional<size_t> content_length = parse_number<size_t>(*content_length_header);
         if (!content_length) {
             return unexpected(ParseError::BadRequest);
         }
@@ -343,9 +337,8 @@ namespace http {
             return unexpected(ParseError::BadRequest);
         }
 
-        string_view header_lines = request.substr(
-            request_line_end + 2, headers_end - request_line_end
-        );
+        string_view header_lines =
+            request.substr(request_line_end + 2, headers_end - request_line_end);
 
         expected<Headers, ParseError> headers = parse_headers(header_lines);
         if (!headers) {

@@ -23,8 +23,7 @@ namespace http {
         return s.substr(first, last - first + 1);
     }
 
-    optional<pair<string_view, string_view>>
-    split_once(string_view s, char delim) {
+    optional<pair<string_view, string_view>> split_once(string_view s, char delim) {
         size_t pos = s.find(delim);
         if (pos == string_view::npos) {
             return nullopt;

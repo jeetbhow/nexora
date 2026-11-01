@@ -26,8 +26,7 @@ protected:
     Node* find(std::string_view path) {
         auto* node = &router.root_;
         for (auto part : path.substr(1) | std::views::split('/')) {
-            auto* child =
-                node->get_child(std::string(part.begin(), part.end()));
+            auto* child = node->get_child(std::string(part.begin(), part.end()));
             if (!child) {
                 break;
             }
@@ -39,20 +38,15 @@ protected:
     // Inspect captures from the recursive matcher until the public API exposes
     // them.
     const Node* match_with_params(
-        Method method,
-        std::string_view target,
-        std::vector<std::string_view>& param_vals
+        Method method, std::string_view target, std::vector<std::string_view>& param_vals
     ) {
-        return Router::match(
-            &router.root_, method, target.substr(1), param_vals
-        );
+        return Router::match(&router.root_, method, target.substr(1), param_vals);
     }
 
     Router router;
 };
 
-class RouterMethodTest : public RouterTest,
-                         public testing::WithParamInterface<Method> {};
+class RouterMethodTest : public RouterTest, public testing::WithParamInterface<Method> {};
 
 using MethodPair = std::pair<Method, Method>;
 
@@ -142,9 +136,7 @@ TEST_F(RouterTest, AddRejectsParamSegmentWithEmptyName) {
     EXPECT_FALSE(router.contains(Method::Get, "/:"));
 }
 
-TEST_F(
-    RouterTest, InvalidWildcardPatternsAreRejectedWithoutChangingExistingRoutes
-) {
+TEST_F(RouterTest, InvalidWildcardPatternsAreRejectedWithoutChangingExistingRoutes) {
     router.add(Method::Get, "/");
     router.add(Method::Get, "/a");
     router.add(Method::Get, "/a/b");
@@ -218,16 +210,12 @@ TEST_F(RouterTest, WildcardIsTriedAfterStaticAndParameterBranches) {
     router.add(Method::Get, "/a/fixed");
 
     std::vector<std::string_view> values;
-    EXPECT_EQ(
-        match_with_params(Method::Get, "/a/fixed", values), find("/a/fixed")
-    );
+    EXPECT_EQ(match_with_params(Method::Get, "/a/fixed", values), find("/a/fixed"));
     EXPECT_TRUE(values.empty());
     EXPECT_EQ(match_with_params(Method::Get, "/a/other", values), find("/a/:"));
     EXPECT_EQ(values, (std::vector<std::string_view>{"other"}));
     values.clear();
-    EXPECT_EQ(
-        match_with_params(Method::Get, "/a/other/tail", values), find("/a/*")
-    );
+    EXPECT_EQ(match_with_params(Method::Get, "/a/other/tail", values), find("/a/*"));
     EXPECT_TRUE(values.empty());
 }
 
@@ -422,9 +410,7 @@ TEST_F(RouterTest, MatchTreatsPatternSyntaxAsLiteralTargetValues) {
     for (const auto value : {":", ":name", "*", "*rest"}) {
         SCOPED_TRACE(value);
         EXPECT_TRUE(read_only.match(Method::Get, std::string("/") + value));
-        EXPECT_TRUE(
-            read_only.match(Method::Get, std::string("/a/") + value + "/b")
-        );
+        EXPECT_TRUE(read_only.match(Method::Get, std::string("/a/") + value + "/b"));
     }
     EXPECT_TRUE(read_only.contains(Method::Get, "/:id"));
     EXPECT_FALSE(read_only.contains(Method::Get, "/:"));
@@ -603,9 +589,7 @@ TEST_F(RouterTest, MatchBacktrackingPreservesSharedPrefixCapture) {
     router.add(Method::Get, "/:outer/:inner/:tail/done");
 
     std::vector<std::string_view> values;
-    ASSERT_NE(
-        match_with_params(Method::Get, "/root/a/value/done", values), nullptr
-    );
+    ASSERT_NE(match_with_params(Method::Get, "/root/a/value/done", values), nullptr);
     EXPECT_EQ(values, (std::vector<std::string_view>{"root", "a", "value"}));
 }
 

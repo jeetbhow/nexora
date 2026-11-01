@@ -29,16 +29,13 @@ TEST(Headers, DuplicatesReturnCommaDelimitedList) {
     ASSERT_TRUE(get_result.has_value());
     ASSERT_TRUE(get_all_result.size() == 2);
     EXPECT_EQ(*get_result, "application/json, text/html");
-    EXPECT_EQ(
-        get_all_result, (vector<string>{"application/json", "text/html"})
-    );
+    EXPECT_EQ(get_all_result, (vector<string>{"application/json", "text/html"}));
 }
 
 // Field names are case-insensitive (RFC 9110 §5.1).
 using CaseInsensitiveCase = tuple<string, string>;
 
-class CaseInsensitiveLookupTest
-    : public ::testing::TestWithParam<CaseInsensitiveCase> {};
+class CaseInsensitiveLookupTest : public ::testing::TestWithParam<CaseInsensitiveCase> {};
 
 TEST_P(CaseInsensitiveLookupTest, MatchesRegardlessOfCase) {
     auto [stored, lookup] = GetParam();
@@ -133,9 +130,7 @@ TEST(Headers, InterleavedDuplicatesJoinInOrder) {
 
     ASSERT_TRUE(get_result.has_value());
     EXPECT_EQ(*get_result, "application/json, text/html");
-    EXPECT_EQ(
-        get_all_result, (vector<string>{"application/json", "text/html"})
-    );
+    EXPECT_EQ(get_all_result, (vector<string>{"application/json", "text/html"}));
 }
 
 TEST(Headers, EmptyValueIsDistinctFromMissing) {

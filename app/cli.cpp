@@ -16,11 +16,9 @@ int main(int argc, char** argv) {
     CLI::App app{"An app that tests the functionality of mininode"};
     app.require_subcommand(1);
 
-    CLI::App* parse_cmd = app.add_subcommand(
-        "parse", "Parse a request and print the request object"
-    );
-    CLI::App* route_cmd =
-        app.add_subcommand("route", "Test a route against target");
+    CLI::App* parse_cmd =
+        app.add_subcommand("parse", "Parse a request and print the request object");
+    CLI::App* route_cmd = app.add_subcommand("route", "Test a route against target");
 
     // Parse
     string filepath;
@@ -31,10 +29,8 @@ int main(int argc, char** argv) {
     // Route
     pair<string, string> route;
     pair<string, string> target;
-    route_cmd->add_option("route", route, "The route being tested against")
-        ->required();
-    route_cmd->add_option("target", target, "The target to match for")
-        ->required();
+    route_cmd->add_option("route", route, "The route being tested against")->required();
+    route_cmd->add_option("target", target, "The target to match for")->required();
 
     CLI11_PARSE(app, argc, argv);
 
@@ -51,11 +47,9 @@ int main(int argc, char** argv) {
         // Normalize to CRLF whether the file uses LF or CRLF line endings.
         string request_raw = buf.str();
         string request_lf = regex_replace(request_raw, regex("\r\n"), "\n");
-        string request_processed =
-            regex_replace(request_lf, regex("\n"), "\r\n");
+        string request_processed = regex_replace(request_lf, regex("\n"), "\r\n");
 
-        expected<Request, ParseError> r =
-            http::parse_request(request_processed);
+        expected<Request, ParseError> r = http::parse_request(request_processed);
         if (r) {
             cout << r->to_string() << "\n";
         } else {

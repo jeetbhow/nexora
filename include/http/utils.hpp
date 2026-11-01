@@ -89,8 +89,7 @@ namespace http {
      * @param map The map to format.
      * @return The JSON object, or "{}" if the map is empty.
      */
-    std::string
-    to_string(const std::unordered_map<std::string, std::string>& map);
+    std::string to_string(const std::unordered_map<std::string, std::string>& map);
 
     /**
      * @brief Formats a list of name/value pairs as a pretty-printed JSON array
@@ -109,8 +108,7 @@ namespace http {
      * @param pairs The pairs to format.
      * @return The JSON array, or "[]" if the list is empty.
      */
-    std::string
-    to_string(const std::vector<std::pair<std::string, std::string>>& pairs);
+    std::string to_string(const std::vector<std::pair<std::string, std::string>>& pairs);
 
     /**
      * @brief Parses an entire string as an integer.

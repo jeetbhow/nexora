@@ -10,7 +10,7 @@ NamespaceIndentation: All
 AccessModifierOffset: -4
 IndentCaseLabels: true
 
-ColumnLimit: 80
+ColumnLimit: 90
 BinPackParameters: OnePerLine
 BinPackArguments: false
 AlignAfterOpenBracket: BlockIndent

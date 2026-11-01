@@ -36,8 +36,7 @@ INSTANTIATE_TEST_SUITE_P(
     RequestLine,
     VersionTest,
     ::testing::Values(
-        VersionCase{"HTTP/1.0", Version::Http10},
-        VersionCase{"HTTP/1.1", Version::Http11}
+        VersionCase{"HTTP/1.0", Version::Http10}, VersionCase{"HTTP/1.1", Version::Http11}
     )
 );
 
@@ -163,8 +162,7 @@ TEST(HeaderFields, PreservesDuplicatesInOrder) {
     ASSERT_TRUE(r.has_value());
 
     EXPECT_EQ(
-        r->headers.get_all("Accept"),
-        (vector<string>{"application/json", "text/html"})
+        r->headers.get_all("Accept"), (vector<string>{"application/json", "text/html"})
     );
 }
 
@@ -235,17 +233,17 @@ INSTANTIATE_TEST_SUITE_P(
     HeaderFields,
     MalformedHeaderTest,
     ::testing::Values(
-        "GET / HTTP/1.1\r\nHost example.com\r\n\r\n",   // missing colon
-        "GET / HTTP/1.1\r\nHost : example.com\r\n\r\n", // space before colon
-        "GET / HTTP/1.1\r\n: example.com\r\n\r\n",      // empty name
+        "GET / HTTP/1.1\r\nHost example.com\r\n\r\n",             // missing colon
+        "GET / HTTP/1.1\r\nHost : example.com\r\n\r\n",           // space before colon
+        "GET / HTTP/1.1\r\n: example.com\r\n\r\n",                // empty name
         "GET / HTTP/1.1\r\nHost: example.com\r\n folded\r\n\r\n", // obsolete
                                                                   // line
                                                                   // folding
-        "GET / HTTP/1.1\r\nX(Bad): value\r\n\r\n",      // non-token name
-        "GET / HTTP/1.1\r\nHost: a\nAccept: b\r\n\r\n", // bare LF line ending
-        "GET / HTTP/1.1\r\nHost: a\rAccept: b\r\n\r\n", // bare CR in value
-        "GET / HTTP/1.1\r\nHost: a\0b\r\n\r\n"s,        // NUL in value
-        "GET / HTTP/1.1\r\nHost: example.com\r\n",      // no empty line
+        "GET / HTTP/1.1\r\nX(Bad): value\r\n\r\n",                // non-token name
+        "GET / HTTP/1.1\r\nHost: a\nAccept: b\r\n\r\n",           // bare LF line ending
+        "GET / HTTP/1.1\r\nHost: a\rAccept: b\r\n\r\n",           // bare CR in value
+        "GET / HTTP/1.1\r\nHost: a\0b\r\n\r\n"s,                  // NUL in value
+        "GET / HTTP/1.1\r\nHost: example.com\r\n",                // no empty line
         "GET / HTTP/1.1\r\n" // no empty line, no headers
     )
 );
@@ -280,9 +278,7 @@ TEST_P(ContentLengthValueTest, ErrorOnInvalidContentLength) {
     EXPECT_FALSE(r.has_value());
 }
 
-INSTANTIATE_TEST_SUITE_P(
-    Body, ContentLengthValueTest, ::testing::Values("-2", "", "5")
-);
+INSTANTIATE_TEST_SUITE_P(Body, ContentLengthValueTest, ::testing::Values("-2", "", "5"));
 
 TEST(Body, MissingContentLengthSkipsBody) {
     string request = "POST / HTTP/1.1\r\n"
@@ -484,8 +480,8 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Values(
         PlusCase{"q=hello+world", "q", "hello world"},   // plus in a value
         PlusCase{"first+name=Ada", "first name", "Ada"}, // plus in a key
-        PlusCase{"q=a%2Bb", "q", "a+b"},    // encoded plus stays literal
-        PlusCase{"q=a+%2B+b", "q", "a + b"} // both together
+        PlusCase{"q=a%2Bb", "q", "a+b"},                 // encoded plus stays literal
+        PlusCase{"q=a+%2B+b", "q", "a + b"}              // both together
     )
 );
 
@@ -515,12 +511,10 @@ INSTANTIATE_TEST_SUITE_P(
         DecodeCase{"", ""},                         // empty input
         DecodeCase{"%2f%2F", "//"},                 // lower- and upper-case hex
         DecodeCase{"a%26b%3Dc", "a&b=c"},           // reserved characters
-        DecodeCase{
-            "caf%C3%A9", "caf\xC3\xA9"
-        },                            // bytes above 127 (UTF-8 "café")
-        DecodeCase{"100%25", "100%"}, // literal percent
-        DecodeCase{"%2541", "%41"},   // decodes only once
-        DecodeCase{"%41%42", "AB"}    // back-to-back escapes
+        DecodeCase{"caf%C3%A9", "caf\xC3\xA9"},     // bytes above 127 (UTF-8 "café")
+        DecodeCase{"100%25", "100%"},               // literal percent
+        DecodeCase{"%2541", "%41"},                 // decodes only once
+        DecodeCase{"%41%42", "AB"}                  // back-to-back escapes
     )
 );
 

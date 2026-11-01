@@ -8,8 +8,7 @@ using namespace std;
 
 namespace http {
     static auto segments(string_view path) {
-        return path.substr(1) | views::split('/') |
-               views::transform([](auto part) {
+        return path.substr(1) | views::split('/') | views::transform([](auto part) {
                    return string_view(part.begin(), part.end());
                });
     }
@@ -23,8 +22,7 @@ namespace http {
         for (auto key : segments(path)) {
             // Reject parameters with no name (a bare ':').
             // Only an unnamed, terminal wildcard is supported.
-            if (wildcard_seen || key == ":" ||
-                (key.starts_with('*') && key != "*")) {
+            if (wildcard_seen || key == ":" || (key.starts_with('*') && key != "*")) {
                 return false;
             }
             wildcard_seen = key == "*";
@@ -144,13 +142,11 @@ namespace http {
 
         size_t pos = target.find('/');
         string_view key = target.substr(0, pos);
-        string_view remain =
-            pos != string_view::npos ? target.substr(pos + 1) : "";
+        string_view remain = pos != string_view::npos ? target.substr(pos + 1) : "";
 
         const Node* child = node->get_child(string(key));
         if (child && child->type == NodeType::Path) {
-            if (const Node* matched =
-                    match(child, method, remain, param_vals)) {
+            if (const Node* matched = match(child, method, remain, param_vals)) {
                 return matched;
             }
         }

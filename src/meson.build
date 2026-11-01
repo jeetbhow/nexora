@@ -1,4 +1,5 @@
 lib_sources = files(
+    'app.cpp',
     'http/headers.cpp',
     'http/http.cpp',
     'utils.cpp',

@@ -12,6 +12,7 @@ Ninja. The Makefile wraps the usual steps and builds with clang-20:
 ```sh
 make          # configure and build
 make test     # build and run the tests
+make run      # build and run main.cpp
 ```
 
 Or run Meson directly:

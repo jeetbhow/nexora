@@ -2,7 +2,7 @@ BUILD_DIR ?= build
 CC = clang-20
 CXX = clang++-20
 
-.PHONY: all build test reconfigure clean
+.PHONY: all build test run reconfigure clean
 
 all: build
 
@@ -14,6 +14,9 @@ build: $(BUILD_DIR)/build.ninja
 
 test: build
 	meson test -C $(BUILD_DIR) --verbose
+
+run: build
+	./$(BUILD_DIR)/nexora
 
 # Recreate the build directory, e.g. after moving the project or changing compiler.
 reconfigure:

@@ -10,8 +10,10 @@
 
 namespace http {
     struct Handler {
-        std::function<void()> handler;
+        std::function<void(Request&)> handler;
         std::vector<std::string> param_ids;
+
+        void handle(Request&& req) const;
     };
 
     enum class NodeType { Path, Param, Wildcard };

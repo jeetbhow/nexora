@@ -3,6 +3,7 @@
 #include "nexora/router/node.hpp"
 
 #include <cstddef>
+#include <functional>
 #include <string_view>
 #include <vector>
 
@@ -23,8 +24,10 @@ namespace http {
         Router& operator=(const Router&) = delete;
 
         // Add a route pattern. A terminal '*' matches one or more remaining
-        // segments. Invalid patterns are ignored.
-        void add(Method method, std::string_view path);
+        // segments. The handler runs for requests matching the route. Invalid
+        // patterns are ignored.
+        void
+        add(Method method, std::string_view path, std::function<void(Request&)> handler);
 
         // Remove an exact registered pattern, including its parameter names.
         void remove(Method method, std::string_view path);

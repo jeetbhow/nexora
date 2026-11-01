@@ -59,7 +59,7 @@ namespace http {
         return result;
     }
 
-    void Router::add(Method method, string_view path) {
+    void Router::add(Method method, string_view path, function<void(Request&)> handler) {
         if (!valid_pattern(path)) {
             return;
         }
@@ -81,12 +81,12 @@ namespace http {
             cur = &cur->get_or_create_child(string(key), NodeType::Path);
         }
 
-        auto handler = Handler{
-            .handler = []() {}, // TODO: Add actual handlers.
+        auto route = Handler{
+            .handler = std::move(handler),
             .param_ids = std::move(param_ids),
         };
 
-        if (cur->try_add_route_handler(method, std::move(handler))) {
+        if (cur->try_add_route_handler(method, std::move(route))) {
             ++size_;
         }
     }

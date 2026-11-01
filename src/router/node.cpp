@@ -8,6 +8,10 @@
 using namespace std;
 
 namespace http {
+    void Handler::handle(Request&& req) const {
+        handler(req);
+    }
+
     Node::Node(std::string_view key, NodeType type) : type(type), key(key) {
     }
 

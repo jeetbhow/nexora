@@ -22,8 +22,8 @@ namespace http {
         Router(const Router&) = delete;
         Router& operator=(const Router&) = delete;
 
-        // Add a route pattern. Invalid patterns, including unsupported
-        // wildcards, are ignored.
+        // Add a route pattern. A terminal '*' matches one or more remaining
+        // segments. Invalid patterns are ignored.
         void add(Method method, std::string_view path);
 
         // Remove an exact registered pattern, including its parameter names.
@@ -33,9 +33,9 @@ namespace http {
         // Invalid patterns return false.
         bool contains(Method method, std::string_view path) const;
 
-        // Match a concrete path, trying static branches before parameter
+        // Match a concrete path, trying static, parameter, then wildcard
         // branches. Parameter names play no part in matching. Invalid paths
-        // return false.
+        // return false. Unnamed wildcards do not add parameter captures.
         bool match(Method method, std::string_view target) const;
 
         // Return the number of routes.

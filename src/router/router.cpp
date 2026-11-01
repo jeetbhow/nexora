@@ -19,12 +19,15 @@ namespace http {
             return false;
         }
 
+        bool wildcard_seen = false;
         for (auto key : segments(path)) {
             // Reject parameters with no name (a bare ':').
-            // Reject wildcards until wildcard matching is enabled.
-            if (key == ":" || key.starts_with('*')) {
+            // Only an unnamed, terminal wildcard is supported.
+            if (wildcard_seen || key == ":" ||
+                (key.starts_with('*') && key != "*")) {
                 return false;
             }
+            wildcard_seen = key == "*";
         }
         return true;
     }
@@ -67,6 +70,7 @@ namespace http {
         Node* cur = &root_;
         for (auto key : segments(path)) {
             if (key[0] == '*') {
+                cur = &cur->get_or_create_child("*", NodeType::Wildcard);
                 break;
             }
 
@@ -123,7 +127,7 @@ namespace http {
 
     // Recursively match the rest of `target` against the subtree rooted at
     // `node`. Return the node that ends the match, or `nullptr` if no route for
-    // `method` ends there. Try static branches before parameter branches.
+    // `method` ends there. Try static, parameter, then wildcard branches.
     const Node* Router::match(
         const Node* node,
         Method method,
@@ -158,6 +162,13 @@ namespace http {
         }
 
         param_vals.pop_back();
+
+        // A terminal wildcard consumes the nonempty remainder without adding
+        // a named parameter capture.
+        const Node* wildcard = node->get_child("*");
+        if (wildcard && wildcard->has_route_handler(method)) {
+            return wildcard;
+        }
 
         return nullptr;
     }

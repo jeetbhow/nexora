@@ -142,12 +142,14 @@ TEST_F(RouterTest, AddRejectsParamSegmentWithEmptyName) {
     EXPECT_FALSE(router.contains(Method::Get, "/:"));
 }
 
-TEST_F(RouterTest, WildcardPatternsAreRejectedWithoutChangingExistingRoutes) {
+TEST_F(
+    RouterTest, InvalidWildcardPatternsAreRejectedWithoutChangingExistingRoutes
+) {
     router.add(Method::Get, "/");
     router.add(Method::Get, "/a");
     router.add(Method::Get, "/a/b");
 
-    for (const auto pattern : {"/*", "/a/*", "/a/*rest", "/a/*/b", "/new/*"}) {
+    for (const auto pattern : {"/a/*rest", "/a/*/b", "/new/*/b", "/a/*/*"}) {
         SCOPED_TRACE(pattern);
         // Post would create a distinct handler if the wildcard were silently
         // skipped.
@@ -166,6 +168,75 @@ TEST_F(RouterTest, WildcardPatternsAreRejectedWithoutChangingExistingRoutes) {
         EXPECT_TRUE(router.contains(Method::Get, "/a/b"));
     }
     EXPECT_EQ(find("/")->get_child("new"), nullptr);
+}
+
+TEST_F(RouterTest, WildcardRegistersAndRemovesAnExactPattern) {
+    router.add(Method::Get, "/a/*");
+    router.add(Method::Get, "/a/*");
+    router.add(Method::Post, "/a/*");
+    EXPECT_EQ(router.size(), 2u);
+    EXPECT_TRUE(router.contains(Method::Get, "/a/*"));
+    EXPECT_FALSE(router.contains(Method::Get, "/a"));
+    EXPECT_FALSE(router.contains(Method::Get, "/a/b"));
+
+    router.remove(Method::Get, "/a");
+    EXPECT_EQ(router.size(), 2u);
+    router.remove(Method::Get, "/a/*");
+    EXPECT_FALSE(router.match(Method::Get, "/a/b"));
+    EXPECT_TRUE(router.match(Method::Post, "/a/b/c"));
+    router.remove(Method::Post, "/a/*");
+    EXPECT_EQ(router.size(), 0u);
+    EXPECT_EQ(find("/")->get_child("a"), nullptr);
+}
+
+TEST_F(RouterTest, WildcardMatchesOneOrMoreRemainingSegments) {
+    router.add(Method::Get, "/a/*");
+    for (const auto target : {"/a/b", "/a/b/c", "/a/*", "/a/:"}) {
+        SCOPED_TRACE(target);
+        EXPECT_TRUE(router.match(Method::Get, target));
+    }
+    EXPECT_FALSE(router.match(Method::Get, "/a"));
+    EXPECT_FALSE(router.match(Method::Get, "/a/"));
+    EXPECT_FALSE(router.match(Method::Get, "/ab/c"));
+    EXPECT_FALSE(router.match(Method::Post, "/a/b"));
+    router.add(Method::Get, "/a");
+    EXPECT_TRUE(router.match(Method::Get, "/a"));
+    router.remove(Method::Get, "/a/*");
+    EXPECT_TRUE(router.match(Method::Get, "/a"));
+}
+
+TEST_F(RouterTest, RootWildcardDoesNotMatchRoot) {
+    router.add(Method::Get, "/*");
+    EXPECT_FALSE(router.match(Method::Get, "/"));
+    EXPECT_TRUE(router.match(Method::Get, "/a"));
+    EXPECT_TRUE(router.match(Method::Get, "/a/b"));
+}
+
+TEST_F(RouterTest, WildcardIsTriedAfterStaticAndParameterBranches) {
+    router.add(Method::Get, "/a/*");
+    router.add(Method::Get, "/a/:id");
+    router.add(Method::Get, "/a/fixed");
+
+    std::vector<std::string_view> values;
+    EXPECT_EQ(
+        match_with_params(Method::Get, "/a/fixed", values), find("/a/fixed")
+    );
+    EXPECT_TRUE(values.empty());
+    EXPECT_EQ(match_with_params(Method::Get, "/a/other", values), find("/a/:"));
+    EXPECT_EQ(values, (std::vector<std::string_view>{"other"}));
+    values.clear();
+    EXPECT_EQ(
+        match_with_params(Method::Get, "/a/other/tail", values), find("/a/*")
+    );
+    EXPECT_TRUE(values.empty());
+}
+
+TEST_F(RouterTest, WildcardPreservesEarlierNamedCaptures) {
+    router.add(Method::Get, "/:id/*");
+    std::vector<std::string_view> values;
+    ASSERT_NE(match_with_params(Method::Get, "/42/b/c", values), nullptr);
+    EXPECT_EQ(values, (std::vector<std::string_view>{"42"}));
+    EXPECT_FALSE(router.match(Method::Get, "/42"));
 }
 
 TEST_F(RouterTest, AddAllowsStaticAndParamSegmentAtSamePosition) {

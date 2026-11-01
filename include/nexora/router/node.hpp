@@ -16,7 +16,7 @@ namespace http {
 
     struct MatchResult {
         const Route* route;
-        std::vector<std::string_view> param_vals;
+        std::vector<std::string> param_vals;
     };
 
     enum class NodeType { Path, Param, Wildcard };

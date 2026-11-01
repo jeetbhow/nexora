@@ -124,7 +124,7 @@ namespace http {
             return nullopt;
         }
 
-        vector<string_view> param_vals;
+        vector<string> param_vals;
         const Node* node = match(&root_, method, target.substr(1), param_vals);
         if (!node) {
             return nullopt;
@@ -137,7 +137,7 @@ namespace http {
         const Node* node,
         Method method,
         string_view target,
-        vector<string_view>& param_vals
+        vector<string>& param_vals
     ) {
         if (!node) {
             return nullptr;
@@ -159,7 +159,7 @@ namespace http {
             }
         }
 
-        param_vals.push_back(key);
+        param_vals.push_back(string(key));
 
         const Node* matched = match(
             get_or_default(node->children, string(":"), nullptr),

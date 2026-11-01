@@ -40,7 +40,7 @@ protected:
     // Inspect captures from the recursive matcher until the public API exposes
     // them.
     const Node* match_with_params(
-        Method method, std::string_view target, std::vector<std::string_view>& param_vals
+        Method method, std::string_view target, std::vector<std::string>& param_vals
     ) {
         return Router::match(&router.root_, method, target.substr(1), param_vals);
     }
@@ -211,11 +211,11 @@ TEST_F(RouterTest, WildcardIsTriedAfterStaticAndParameterBranches) {
     router.add(Method::Get, "/a/:id", noop);
     router.add(Method::Get, "/a/fixed", noop);
 
-    std::vector<std::string_view> values;
+    std::vector<std::string> values;
     EXPECT_EQ(match_with_params(Method::Get, "/a/fixed", values), find("/a/fixed"));
     EXPECT_TRUE(values.empty());
     EXPECT_EQ(match_with_params(Method::Get, "/a/other", values), find("/a/:"));
-    EXPECT_EQ(values, (std::vector<std::string_view>{"other"}));
+    EXPECT_EQ(values, (std::vector<std::string>{"other"}));
     values.clear();
     EXPECT_EQ(match_with_params(Method::Get, "/a/other/tail", values), find("/a/*"));
     EXPECT_TRUE(values.empty());
@@ -223,9 +223,9 @@ TEST_F(RouterTest, WildcardIsTriedAfterStaticAndParameterBranches) {
 
 TEST_F(RouterTest, WildcardPreservesEarlierNamedCaptures) {
     router.add(Method::Get, "/:id/*", noop);
-    std::vector<std::string_view> values;
+    std::vector<std::string> values;
     ASSERT_NE(match_with_params(Method::Get, "/42/b/c", values), nullptr);
-    EXPECT_EQ(values, (std::vector<std::string_view>{"42"}));
+    EXPECT_EQ(values, (std::vector<std::string>{"42"}));
     EXPECT_FALSE(router.match(Method::Get, "/42"));
 }
 
@@ -506,7 +506,7 @@ TEST_F(RouterTest, MatchRootAndStaticRoutesCaptureNoParams) {
 
     for (const auto target : {"/", "/users/new"}) {
         SCOPED_TRACE(target);
-        std::vector<std::string_view> values;
+        std::vector<std::string> values;
         ASSERT_NE(match_with_params(Method::Get, target, values), nullptr);
         EXPECT_TRUE(values.empty());
     }
@@ -515,11 +515,11 @@ TEST_F(RouterTest, MatchRootAndStaticRoutesCaptureNoParams) {
 TEST_F(RouterTest, MatchCapturesParamsInPathOrder) {
     router.add(Method::Get, "/users/:id/posts/:post", noop);
 
-    std::vector<std::string_view> values;
+    std::vector<std::string> values;
     auto* node = match_with_params(Method::Get, "/users/42/posts/7", values);
 
     ASSERT_NE(node, nullptr);
-    EXPECT_EQ(values, (std::vector<std::string_view>{"42", "7"}));
+    EXPECT_EQ(values, (std::vector<std::string>{"42", "7"}));
     ASSERT_NE(node->get_route(Method::Get), nullptr);
     EXPECT_EQ(
         node->get_route(Method::Get)->param_ids,
@@ -530,16 +530,16 @@ TEST_F(RouterTest, MatchCapturesParamsInPathOrder) {
 TEST_F(RouterTest, MatchCapturesLiteralColonValues) {
     router.add(Method::Get, "/:first/:second", noop);
 
-    std::vector<std::string_view> values;
+    std::vector<std::string> values;
     ASSERT_NE(match_with_params(Method::Get, "/:/:", values), nullptr);
-    EXPECT_EQ(values, (std::vector<std::string_view>{":", ":"}));
+    EXPECT_EQ(values, (std::vector<std::string>{":", ":"}));
 }
 
 TEST_F(RouterTest, MatchStaticWinnerDoesNotCaptureParamAlternative) {
     router.add(Method::Get, "/users/:id", noop);
     router.add(Method::Get, "/users/new", noop);
 
-    std::vector<std::string_view> values;
+    std::vector<std::string> values;
     auto* node = match_with_params(Method::Get, "/users/new", values);
 
     ASSERT_NE(node, nullptr);
@@ -551,20 +551,20 @@ TEST_F(RouterTest, MatchCapturesParamsForRequestedMethod) {
     router.add(Method::Get, "/a/:id", noop);
     router.add(Method::Post, "/:prefix/:name", noop);
 
-    std::vector<std::string_view> get_values;
+    std::vector<std::string> get_values;
     auto* get_node = match_with_params(Method::Get, "/a/42", get_values);
     ASSERT_NE(get_node, nullptr);
-    EXPECT_EQ(get_values, (std::vector<std::string_view>{"42"}));
+    EXPECT_EQ(get_values, (std::vector<std::string>{"42"}));
     EXPECT_EQ(
         get_node->get_route(Method::Get)->param_ids,
         (std::vector<std::string>{"id"})
     );
 
     // The static branch captures "42" before failing to find a Post handler.
-    std::vector<std::string_view> post_values;
+    std::vector<std::string> post_values;
     auto* post_node = match_with_params(Method::Post, "/a/42", post_values);
     ASSERT_NE(post_node, nullptr);
-    EXPECT_EQ(post_values, (std::vector<std::string_view>{"a", "42"}));
+    EXPECT_EQ(post_values, (std::vector<std::string>{"a", "42"}));
     EXPECT_EQ(
         post_node->get_route(Method::Post)->param_ids,
         (std::vector<std::string>{"prefix", "name"})
@@ -575,11 +575,11 @@ TEST_F(RouterTest, MatchBacktrackingDiscardsFailedBranchCaptures) {
     router.add(Method::Get, "/a/:discard/:also_discard/end", noop);
     router.add(Method::Get, "/:kept/b/:tail/done", noop);
 
-    std::vector<std::string_view> values;
+    std::vector<std::string> values;
     auto* node = match_with_params(Method::Get, "/a/b/c/done", values);
 
     ASSERT_NE(node, nullptr);
-    EXPECT_EQ(values, (std::vector<std::string_view>{"a", "c"}));
+    EXPECT_EQ(values, (std::vector<std::string>{"a", "c"}));
     EXPECT_EQ(
         node->get_route(Method::Get)->param_ids,
         (std::vector<std::string>{"kept", "tail"})
@@ -590,9 +590,9 @@ TEST_F(RouterTest, MatchBacktrackingPreservesSharedPrefixCapture) {
     router.add(Method::Get, "/:outer/a/:discard/end", noop);
     router.add(Method::Get, "/:outer/:inner/:tail/done", noop);
 
-    std::vector<std::string_view> values;
+    std::vector<std::string> values;
     ASSERT_NE(match_with_params(Method::Get, "/root/a/value/done", values), nullptr);
-    EXPECT_EQ(values, (std::vector<std::string_view>{"root", "a", "value"}));
+    EXPECT_EQ(values, (std::vector<std::string>{"root", "a", "value"}));
 }
 
 TEST_F(RouterTest, MatchFailureLeavesNoParamCaptures) {
@@ -601,12 +601,12 @@ TEST_F(RouterTest, MatchFailureLeavesNoParamCaptures) {
     for (const auto target :
          {"/missing", "/a/1", "/a/1/2/missing", "/a/1/2/done/extra"}) {
         SCOPED_TRACE(target);
-        std::vector<std::string_view> values;
+        std::vector<std::string> values;
         EXPECT_EQ(match_with_params(Method::Get, target, values), nullptr);
         EXPECT_TRUE(values.empty());
     }
 
-    std::vector<std::string_view> values;
+    std::vector<std::string> values;
     EXPECT_EQ(match_with_params(Method::Post, "/a/1/2/done", values), nullptr);
     EXPECT_TRUE(values.empty());
 }

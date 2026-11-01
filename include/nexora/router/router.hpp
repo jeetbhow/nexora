@@ -33,7 +33,7 @@ namespace http {
             const Node* node,
             Method method,
             std::string_view target,
-            std::vector<std::string_view>& param_vals
+            std::vector<std::string>& param_vals
         );
 
         static void prune_empty_ancestors(Node* node);

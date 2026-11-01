@@ -1,9 +1,8 @@
 BUILD_DIR ?= build
 CC = clang-20
 CXX = clang++-20
-ARGS ?=
 
-.PHONY: all build test run reconfigure clean
+.PHONY: all build test reconfigure clean
 
 all: build
 
@@ -15,9 +14,6 @@ build: $(BUILD_DIR)/build.ninja
 
 test: build
 	meson test -C $(BUILD_DIR) --verbose
-
-run: build
-	./$(BUILD_DIR)/app/cli $(ARGS)
 
 # Recreate the build directory, e.g. after moving the project or changing compiler.
 reconfigure:

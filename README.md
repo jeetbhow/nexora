@@ -12,7 +12,6 @@ Ninja. The Makefile wraps the usual steps and builds with clang-20:
 ```sh
 make          # configure and build
 make test     # build and run the tests
-make run ARGS="--help"  # build and show CLI usage
 ```
 
 Or run Meson directly:
@@ -21,14 +20,12 @@ Or run Meson directly:
 meson setup build
 meson compile -C build
 meson test -C build
-./build/app/cli --help
 ```
 
 ## Layout
 
 - `include/nexora/` - public headers of the `http` library
 - `src/` - the library's sources, built as the static library `libhttp`
-- `app/` - a CLI for request parsing and route matching
 - `tests/` - GoogleTest unit tests
 
 ## Roadmap

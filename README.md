@@ -12,7 +12,7 @@ Ninja. The Makefile wraps the usual steps and builds with clang-20:
 ```sh
 make          # configure and build
 make test     # build and run the tests
-make run      # build and run the example app
+make run ARGS="--help"  # build and show CLI usage
 ```
 
 Or run Meson directly:
@@ -21,22 +21,27 @@ Or run Meson directly:
 meson setup build
 meson compile -C build
 meson test -C build
-./build/app/app
+./build/app/cli --help
 ```
 
 ## Layout
 
 - `include/http/` - public headers of the `http` library
 - `src/` - the library's sources, built as the static library `libhttp`
-- `app/` - an example app that links the library
+- `app/` - a CLI for request parsing and route matching
 - `tests/` - GoogleTest unit tests
 
 ## Roadmap
 
-- [x] Request parsing
-- [ ] Router
+- [ ] Request parsing — request line, headers, body, and query parameters complete;
+  path percent-decoding remains
+- [ ] Router — static, parameter, and terminal wildcard matching complete;
+  public match results and wildcard captures remain
 - [ ] Response
 - [ ] Route registration
 - [ ] Middleware
 - [ ] Server
 - [ ] Polish
+
+See [docs/tasks.md](docs/tasks.md) for the detailed checklist and
+[docs/design.md](docs/design.md) for current behavior and the planned framework.

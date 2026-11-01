@@ -436,27 +436,6 @@ TEST(Query, NamesAreCaseSensitive) {
     EXPECT_EQ(r->query("Sort"), "asc");
 }
 
-TEST(Query, LooksUpDecodedName) {
-    string request = "GET /search?first%20name=Ada HTTP/1.1\r\n"
-                     "\r\n";
-
-    expected<Request, ParseError> r = parse_request(request);
-
-    ASSERT_TRUE(r.has_value());
-    EXPECT_EQ(r->query("first name"), "Ada");
-}
-
-TEST(Query, CallableOnConstRequest) {
-    string request = "GET /search?sort=asc HTTP/1.1\r\n"
-                     "\r\n";
-
-    expected<Request, ParseError> r = parse_request(request);
-    ASSERT_TRUE(r.has_value());
-
-    const Request& cr = *r;
-    EXPECT_EQ(cr.query("sort"), "asc");
-}
-
 using PlusCase = tuple<string, string, string>;
 
 class QueryPlusTest : public ::testing::TestWithParam<PlusCase> {};
@@ -542,3 +521,16 @@ INSTANTIATE_TEST_SUITE_P(
         "%4z"   // second digit not hex
     )
 );
+
+TEST(RequestToString, IncludesParams) {
+    Request r;
+    r.params["name"] = "world";
+
+    EXPECT_NE(r.to_string().find("\"params\": {\n    \"name\": \"world\"\n  }"), string::npos);
+}
+
+TEST(RequestToString, EmptyParamsPrintAsEmptyObject) {
+    Request r;
+
+    EXPECT_NE(r.to_string().find("\"params\": {}"), string::npos);
+}

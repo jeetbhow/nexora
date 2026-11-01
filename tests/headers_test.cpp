@@ -15,6 +15,11 @@ TEST(Headers, NulloptOnNonExistentHeader) {
 
     EXPECT_FALSE(get_result.has_value());
     EXPECT_TRUE(get_all_result.empty());
+
+    Headers empty;
+
+    EXPECT_FALSE(empty.get("Host").has_value());
+    EXPECT_TRUE(empty.get_all("Host").empty());
 }
 
 TEST(Headers, DuplicatesReturnCommaDelimitedList) {
@@ -30,6 +35,17 @@ TEST(Headers, DuplicatesReturnCommaDelimitedList) {
     ASSERT_TRUE(get_all_result.size() == 2);
     EXPECT_EQ(*get_result, "application/json, text/html");
     EXPECT_EQ(get_all_result, (vector<string>{"application/json", "text/html"}));
+
+    Headers interleaved;
+
+    interleaved.add("Accept", "application/json");
+    interleaved.add("Host", "example.com");
+    interleaved.add("Accept", "text/html");
+
+    EXPECT_EQ(interleaved.get("Accept"), "application/json, text/html");
+    EXPECT_EQ(
+        interleaved.get_all("Accept"), (vector<string>{"application/json", "text/html"})
+    );
 }
 
 // Field names are case-insensitive (RFC 9110 §5.1).
@@ -85,22 +101,6 @@ TEST(Headers, RemovingNonExistentHeaderNoOps) {
     EXPECT_EQ(h.fields[0].second, "example.com");
 }
 
-TEST(Headers, RemovesDuplicates) {
-    Headers h;
-
-    h.add("Host", "example.com");
-    h.add("Accept", "application/json");
-    h.add("Accept", "text/html");
-
-    ASSERT_TRUE(h.fields.size() == 3);
-
-    h.remove("Accept");
-
-    ASSERT_TRUE(h.fields.size() == 1);
-    EXPECT_EQ(h.fields[0].first, "Host");
-    EXPECT_EQ(h.fields[0].second, "example.com");
-}
-
 TEST(Headers, RemovePreservesOrderOfRemainingFields) {
     Headers h;
 
@@ -116,21 +116,6 @@ TEST(Headers, RemovePreservesOrderOfRemainingFields) {
     EXPECT_EQ(h.fields[0].first, "Host");
     EXPECT_EQ(h.fields[1].first, "User-Agent");
     EXPECT_EQ(h.fields[2].first, "Connection");
-}
-
-TEST(Headers, InterleavedDuplicatesJoinInOrder) {
-    Headers h;
-
-    h.add("Accept", "application/json");
-    h.add("Host", "example.com");
-    h.add("Accept", "text/html");
-
-    auto get_result = h.get("Accept");
-    vector<string> get_all_result = h.get_all("Accept");
-
-    ASSERT_TRUE(get_result.has_value());
-    EXPECT_EQ(*get_result, "application/json, text/html");
-    EXPECT_EQ(get_all_result, (vector<string>{"application/json", "text/html"}));
 }
 
 TEST(Headers, EmptyValueIsDistinctFromMissing) {
@@ -155,13 +140,6 @@ TEST(Headers, PrefixOfNameDoesNotMatch) {
     EXPECT_FALSE(h.get("Content-Type-Extra").has_value());
     EXPECT_TRUE(h.get_all("Content").empty());
     EXPECT_TRUE(h.get_all("Content-Type-Extra").empty());
-}
-
-TEST(Headers, NulloptOnEmptyHeaders) {
-    Headers h;
-
-    EXPECT_FALSE(h.get("Host").has_value());
-    EXPECT_TRUE(h.get_all("Host").empty());
 }
 
 TEST(Headers, RemoveThenAddReplacesValue) {

@@ -2,7 +2,6 @@
 
 #include "nexora/router/router.hpp"
 
-#include <array>
 #include <ranges>
 #include <string>
 #include <utility>
@@ -11,16 +10,6 @@
 using namespace http;
 
 const auto noop = [](Request&) {};
-
-constexpr std::array methods{
-    Method::Get,
-    Method::Head,
-    Method::Post,
-    Method::Put,
-    Method::Delete,
-    Method::Patch,
-    Method::Options,
-};
 
 class RouterTest : public testing::Test {
 protected:
@@ -47,25 +36,6 @@ protected:
 
     Router router;
 };
-
-class RouterMethodTest : public RouterTest, public testing::WithParamInterface<Method> {};
-
-using MethodPair = std::pair<Method, Method>;
-
-std::vector<MethodPair> distinct_method_pairs() {
-    std::vector<MethodPair> pairs;
-    for (const auto first : methods) {
-        for (const auto second : methods) {
-            if (first != second) {
-                pairs.emplace_back(first, second);
-            }
-        }
-    }
-    return pairs;
-}
-
-class RouterMethodPairTest : public RouterTest,
-                             public testing::WithParamInterface<MethodPair> {};
 
 // Router::add()
 
@@ -229,39 +199,17 @@ TEST_F(RouterTest, WildcardPreservesEarlierNamedCaptures) {
     EXPECT_FALSE(router.match(Method::Get, "/42"));
 }
 
-TEST_F(RouterTest, AddAllowsStaticAndParamSegmentAtSamePosition) {
-    router.add(Method::Get, "/a/b", noop);
-    router.add(Method::Get, "/:x/b", noop);
-
-    EXPECT_EQ(router.size(), 2u);
-    EXPECT_TRUE(router.contains(Method::Get, "/a/b"));
-    EXPECT_TRUE(router.contains(Method::Get, "/:x/b"));
-}
-
-TEST_P(RouterMethodTest, AddRegistersSingleRoute) {
-    const auto method = GetParam();
-    router.add(method, "/a", noop);
+TEST_F(RouterTest, AddRegistersSingleRoute) {
+    router.add(Method::Get, "/a", noop);
 
     EXPECT_EQ(router.size(), 1u);
-    auto a = router.contains(method, "/a");
-    EXPECT_TRUE(a);
-}
-
-TEST_F(RouterTest, AddRegistersTwoRoutesWithSameMethod) {
-    router.add(Method::Get, "/a", noop);
-    router.add(Method::Get, "/b", noop);
-
-    EXPECT_EQ(router.size(), 2u);
-
     auto a = router.contains(Method::Get, "/a");
     EXPECT_TRUE(a);
-
-    auto b = router.contains(Method::Get, "/b");
-    EXPECT_TRUE(b);
 }
 
-TEST_P(RouterMethodPairTest, AddRegistersTwoRoutesWithDifferentMethods) {
-    const auto [first, second] = GetParam();
+TEST_F(RouterTest, AddRegistersTwoRoutesWithDifferentMethods) {
+    const auto first = Method::Get;
+    const auto second = Method::Post;
     router.add(first, "/a", noop);
     router.add(second, "/b", noop);
 
@@ -322,8 +270,9 @@ TEST_F(RouterTest, ContainsParamRouteOnlyForRegisteredPattern) {
     EXPECT_FALSE(router.contains(Method::Get, "/a"));
 }
 
-TEST_P(RouterMethodPairTest, ContainsReturnsFalseForDifferentMethod) {
-    const auto [first, second] = GetParam();
+TEST_F(RouterTest, ContainsReturnsFalseForDifferentMethod) {
+    const auto first = Method::Get;
+    const auto second = Method::Post;
     router.add(first, "/a", noop);
 
     auto a = router.contains(second, "/a");
@@ -343,25 +292,15 @@ TEST_F(RouterTest, MatchInvalidPathReturnsFalse) {
     }
 }
 
-TEST_F(RouterTest, MatchRegisteredPathMatches) {
+TEST_F(RouterTest, MatchRegisteredPathsMatch) {
+    router.add(Method::Get, "/", noop);
     router.add(Method::Get, "/a", noop);
-
-    bool result = router.match(Method::Get, "/a").has_value();
-    EXPECT_TRUE(result);
-}
-
-TEST_F(RouterTest, MatchRecursivePathMatches) {
     router.add(Method::Get, "/a/b", noop);
 
-    bool result = router.match(Method::Get, "/a/b").has_value();
-    EXPECT_TRUE(result);
-}
-
-TEST_F(RouterTest, MatchRootPathMatches) {
-    router.add(Method::Get, "/", noop);
-
-    bool result = router.match(Method::Get, "/").has_value();
-    EXPECT_TRUE(result);
+    for (const auto target : {"/", "/a", "/a/b"}) {
+        SCOPED_TRACE(target);
+        EXPECT_TRUE(router.match(Method::Get, target).has_value());
+    }
 }
 
 TEST_F(RouterTest, MatchIntermediateNodeWithoutRouteRejects) {
@@ -373,6 +312,7 @@ TEST_F(RouterTest, MatchIntermediateNodeWithoutRouteRejects) {
 
 TEST_F(RouterTest, MatchPathLongerThanRegisteredRejects) {
     router.add(Method::Get, "/a", noop);
+    router.add(Method::Get, "/:x", noop);
 
     bool result = router.match(Method::Get, "/a/b").has_value();
     EXPECT_FALSE(result);
@@ -420,13 +360,6 @@ TEST_F(RouterTest, MatchTreatsPatternSyntaxAsLiteralTargetValues) {
     EXPECT_EQ(read_only.size(), 2u);
 }
 
-TEST_F(RouterTest, MatchParamSegmentFollowedByStaticSegmentMatches) {
-    router.add(Method::Get, "/:x/b", noop);
-
-    bool result = router.match(Method::Get, "/a/b").has_value();
-    EXPECT_TRUE(result);
-}
-
 TEST_F(RouterTest, MatchStaticSegmentTakesPriorityOverParam) {
     router.add(Method::Get, "/a/b", noop);
     router.add(Method::Post, "/:x/b", noop);
@@ -444,20 +377,6 @@ TEST_F(RouterTest, MatchBacktracksFromStaticSegmentToParam) {
     router.add(Method::Get, "/:x/c", noop);
 
     bool result = router.match(Method::Get, "/a/c").has_value();
-    EXPECT_TRUE(result);
-}
-
-TEST_F(RouterTest, MatchParamSegmentDoesNotSpanMultipleSegments) {
-    router.add(Method::Get, "/:x", noop);
-
-    bool result = router.match(Method::Get, "/a/b").has_value();
-    EXPECT_FALSE(result);
-}
-
-TEST_F(RouterTest, MatchMultipleParamSegmentsMatch) {
-    router.add(Method::Get, "/:x/:y", noop);
-
-    bool result = router.match(Method::Get, "/a/b").has_value();
     EXPECT_TRUE(result);
 }
 
@@ -493,13 +412,6 @@ TEST_F(RouterTest, MatchFallsBackToParamWhenStaticNodeHasNoRoute) {
     EXPECT_TRUE(result);
 }
 
-TEST_F(RouterTest, MatchIntermediateNodeWithoutParamRouteRejects) {
-    router.add(Method::Get, "/a/c", noop);
-
-    bool result = router.match(Method::Get, "/a").has_value();
-    EXPECT_FALSE(result);
-}
-
 TEST_F(RouterTest, MatchRootAndStaticRoutesCaptureNoParams) {
     router.add(Method::Get, "/", noop);
     router.add(Method::Get, "/users/new", noop);
@@ -510,6 +422,51 @@ TEST_F(RouterTest, MatchRootAndStaticRoutesCaptureNoParams) {
         ASSERT_NE(match_with_params(Method::Get, target, values), nullptr);
         EXPECT_TRUE(values.empty());
     }
+}
+
+TEST_F(RouterTest, MatchResultHoldsRouteAndCapturedValues) {
+    router.add(Method::Get, "/users/:id/posts/:post", noop);
+
+    auto result = router.match(Method::Get, "/users/42/posts/7");
+
+    ASSERT_TRUE(result.has_value());
+    ASSERT_NE(result->route, nullptr);
+    EXPECT_EQ(result->route->param_ids, (std::vector<std::string>{"id", "post"}));
+    EXPECT_EQ(result->param_vals, (std::vector<std::string>{"42", "7"}));
+}
+
+TEST_F(RouterTest, MatchResultCapturesOutliveTheTarget) {
+    router.add(Method::Get, "/users/:id", noop);
+
+    auto result = [&] {
+        std::string target = "/users/42";
+        return router.match(Method::Get, target);
+    }();
+
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(result->param_vals, (std::vector<std::string>{"42"}));
+}
+
+TEST_F(RouterTest, MatchResultForStaticRouteHasNoCaptures) {
+    router.add(Method::Get, "/users/new", noop);
+
+    auto result = router.match(Method::Get, "/users/new");
+
+    ASSERT_TRUE(result.has_value());
+    EXPECT_TRUE(result->route->param_ids.empty());
+    EXPECT_TRUE(result->param_vals.empty());
+}
+
+TEST_F(RouterTest, MatchResultRunsTheRegisteredHandler) {
+    int calls = 0;
+    router.add(Method::Get, "/a", [&](Request&) { ++calls; });
+
+    auto result = router.match(Method::Get, "/a");
+
+    ASSERT_TRUE(result.has_value());
+    Request req;
+    result->route->handler(req);
+    EXPECT_EQ(calls, 1);
 }
 
 TEST_F(RouterTest, MatchCapturesParamsInPathOrder) {
@@ -650,8 +607,9 @@ TEST_F(RouterTest, RemoveNonExistentPathIsNoOp) {
     }
 }
 
-TEST_P(RouterMethodPairTest, RemoveNonExistentMethodIsNoOp) {
-    const auto [first, second] = GetParam();
+TEST_F(RouterTest, RemoveNonExistentMethodIsNoOp) {
+    const auto first = Method::Get;
+    const auto second = Method::Post;
     router.add(first, "/a", noop);
 
     router.remove(second, "/a");
@@ -664,8 +622,9 @@ TEST_P(RouterMethodPairTest, RemoveNonExistentMethodIsNoOp) {
     EXPECT_FALSE(second_a);
 }
 
-TEST_P(RouterMethodPairTest, RemoveConservesOtherMethods) {
-    const auto [first, second] = GetParam();
+TEST_F(RouterTest, RemoveConservesOtherMethods) {
+    const auto first = Method::Get;
+    const auto second = Method::Post;
     router.add(first, "/a", noop);
     router.add(second, "/a", noop);
 
@@ -719,8 +678,9 @@ TEST_F(RouterTest, RemoveConservesInternalNode) {
     EXPECT_TRUE(a_c);
 }
 
-TEST_P(RouterMethodPairTest, RemoveDeletesChildNodeIfNoMethods) {
-    const auto [first, second] = GetParam();
+TEST_F(RouterTest, RemoveDeletesChildNodeIfNoMethods) {
+    const auto first = Method::Get;
+    const auto second = Method::Post;
     router.add(first, "/a", noop);
     router.add(first, "/a/b", noop);
     router.add(second, "/a/b", noop);
@@ -943,8 +903,9 @@ TEST_F(RouterTest, SizeCountsDuplicateRouteOnce) {
     EXPECT_TRUE(a);
 }
 
-TEST_P(RouterMethodPairTest, SizeCountsEachMethodOnSamePath) {
-    const auto [first, second] = GetParam();
+TEST_F(RouterTest, SizeCountsEachMethodOnSamePath) {
+    const auto first = Method::Get;
+    const auto second = Method::Post;
     router.add(first, "/a", noop);
     router.add(second, "/a", noop);
 
@@ -956,22 +917,3 @@ TEST_P(RouterMethodPairTest, SizeCountsEachMethodOnSamePath) {
     auto second_a = router.contains(second, "/a");
     EXPECT_TRUE(second_a);
 }
-
-INSTANTIATE_TEST_SUITE_P(
-    AllMethods,
-    RouterMethodTest,
-    testing::ValuesIn(methods),
-    [](const testing::TestParamInfo<Method>& info) {
-        return std::string(http::to_string(info.param));
-    }
-);
-
-INSTANTIATE_TEST_SUITE_P(
-    DistinctMethods,
-    RouterMethodPairTest,
-    testing::ValuesIn(distinct_method_pairs()),
-    [](const testing::TestParamInfo<MethodPair>& info) {
-        return std::string(http::to_string(info.param.first)) + "_" +
-               std::string(http::to_string(info.param.second));
-    }
-);

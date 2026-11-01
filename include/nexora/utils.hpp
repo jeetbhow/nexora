@@ -5,6 +5,7 @@
 #include <string>
 #include <string_view>
 #include <system_error>
+#include <type_traits>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -137,5 +138,45 @@ namespace http {
         }
 
         return result;
+    }
+
+    /**
+     * @brief Looks up a key in a map without inserting it, falling back to a
+     *        default.
+     *
+     * The map is not modified, unlike `operator[]`, which inserts a missing
+     * key. The default is a pointer so that `nullptr` can stand for "no
+     * value".
+     *
+     * @param map           The map to search.
+     * @param key           The key to look up.
+     * @param default_value The pointer to return if `key` is not in `map`;
+     *                      may be `nullptr`.
+     * @return A pointer to the value stored under `key`, or `default_value`
+     *         if there is none. A pointer into the map stays valid until the
+     *         map rehashes or the entry is erased.
+     */
+    template <typename K, typename V>
+    const V* get_or_default(
+        const std::unordered_map<K, V>& map,
+        const K& key,
+        std::type_identity_t<const V*> default_value
+    ) {
+        auto it = map.find(key);
+        return it != map.end() ? &it->second : default_value;
+    }
+
+    /**
+     * @brief The mutable overload of `get_or_default`, for a non-const map.
+     *
+     * @return A pointer through which the stored value can be modified, or
+     *         `default_value` if `key` is not in `map`.
+     */
+    template <typename K, typename V>
+    V* get_or_default(
+        std::unordered_map<K, V>& map, const K& key, std::type_identity_t<V*> default_value
+    ) {
+        auto it = map.find(key);
+        return it != map.end() ? &it->second : default_value;
     }
 } // namespace http

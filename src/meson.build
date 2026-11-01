@@ -2,7 +2,8 @@ lib_sources = files(
     'headers.cpp',
     'http.cpp',
     'utils.cpp',
-    'router.cpp'
+    'router/router.cpp',
+    'router/node.cpp'
 )
 
 http_lib = static_library(

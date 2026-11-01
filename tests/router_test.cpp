@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "http/router.hpp"
+#include "http/router/router.hpp"
 
 #include <array>
 #include <ranges>
@@ -23,11 +23,11 @@ constexpr std::array methods{
 class RouterTest : public testing::Test {
 protected:
     // Walk static branches, stopping at the last existing node.
-    RouterNode* find(std::string_view path) {
+    Node* find(std::string_view path) {
         auto* node = &router.root_;
         for (auto part : path.substr(1) | std::views::split('/')) {
             auto* child =
-                node->get_child(std::string_view(part.begin(), part.end()));
+                node->get_child(std::string(part.begin(), part.end()));
             if (!child) {
                 break;
             }
@@ -38,7 +38,7 @@ protected:
 
     // Inspect captures from the recursive matcher until the public API exposes
     // them.
-    const RouterNode* match_with_params(
+    const Node* match_with_params(
         Method method,
         std::string_view target,
         std::vector<std::string_view>& param_vals
@@ -468,6 +468,14 @@ TEST_F(RouterTest, MatchCapturesParamsInPathOrder) {
     );
 }
 
+TEST_F(RouterTest, MatchCapturesLiteralColonValues) {
+    router.add(Method::Get, "/:first/:second");
+
+    std::vector<std::string_view> values;
+    ASSERT_NE(match_with_params(Method::Get, "/:/:", values), nullptr);
+    EXPECT_EQ(values, (std::vector<std::string_view>{":", ":"}));
+}
+
 TEST_F(RouterTest, MatchStaticWinnerDoesNotCaptureParamAlternative) {
     router.add(Method::Get, "/users/:id");
     router.add(Method::Get, "/users/new");
@@ -777,7 +785,7 @@ TEST_F(RouterTest, RemoveParamRoutePrunesParamNodeAndRoutelessAncestors) {
 
     // Both the param node and the "a" node that held it are gone.
     EXPECT_EQ(find("/")->get_child("a"), nullptr);
-    EXPECT_EQ(find("/")->get_param_child(), nullptr);
+    EXPECT_EQ(find("/")->get_child(":"), nullptr);
 }
 
 TEST_F(RouterTest, RemoveParamRoutePruningStopsAtAncestorWithRoute) {
@@ -787,9 +795,9 @@ TEST_F(RouterTest, RemoveParamRoutePruningStopsAtAncestorWithRoute) {
     router.remove(Method::Get, "/a/:x/c");
 
     // The param node and its "c" child are pruned, but "a" still holds a route.
-    RouterNode* a = find("/a");
+    Node* a = find("/a");
     EXPECT_NE(a, find("/"));
-    EXPECT_EQ(a->get_param_child(), nullptr);
+    EXPECT_EQ(a->get_child(":"), nullptr);
     EXPECT_TRUE(router.contains(Method::Get, "/a"));
 }
 
@@ -802,7 +810,7 @@ TEST_F(RouterTest, RemoveParamRouteConservesParamNodeWithChildRoute) {
     EXPECT_EQ(router.size(), 1u);
     EXPECT_FALSE(router.contains(Method::Get, "/a/:x"));
     EXPECT_TRUE(router.contains(Method::Get, "/a/:x/c"));
-    EXPECT_NE(find("/a")->get_param_child(), nullptr);
+    EXPECT_NE(find("/a")->get_child(":"), nullptr);
 }
 
 TEST_F(RouterTest, RemovePrunesChainOfRoutelessNodes) {
@@ -842,7 +850,7 @@ TEST_F(RouterTest, RemovePruningStopsAtAncestorWithRoute) {
     EXPECT_FALSE(a_b_c);
 
     // "c" and "b" are pruned, but "a" still holds a route.
-    RouterNode* node = find("/a/b/c");
+    Node* node = find("/a/b/c");
     EXPECT_EQ(node, find("/a"));
     EXPECT_EQ(node->get_child("b"), nullptr);
 }
@@ -856,7 +864,7 @@ TEST_F(RouterTest, RemoveLastRouteLeavesRouterUsable) {
     EXPECT_FALSE(a_b);
 
     // Only the root is left.
-    RouterNode* root = find("/a/b");
+    Node* root = find("/a/b");
     EXPECT_EQ(root, find("/"));
     EXPECT_EQ(root->get_child("a"), nullptr);
 

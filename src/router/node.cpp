@@ -8,7 +8,7 @@
 
 using namespace std;
 
-namespace http {
+namespace nexora::router {
     Node::Node(std::string_view key, NodeType type) : type(type), key(key) {
     }
 
@@ -17,11 +17,11 @@ namespace http {
     }
 
     const Node* Node::get_child(const std::string& key) const {
-        return get_or_default(children, key, nullptr);
+        return http::get_or_default(children, key, nullptr);
     }
 
     Node* Node::get_child(const std::string& key) {
-        return get_or_default(children, key, nullptr);
+        return http::get_or_default(children, key, nullptr);
     }
 
     Node& Node::get_or_create_child(const string& key, NodeType type) {
@@ -44,11 +44,11 @@ namespace http {
         return it->second;
     }
 
-    const Route* Node::get_route(Method method) const {
-        return get_or_default(routes, method, nullptr);
+    const Route* Node::get_route(http::Method method) const {
+        return http::get_or_default(routes, method, nullptr);
     }
 
-    bool Node::try_remove_route(Method method, const vector<string_view>& param_ids) {
+    bool Node::try_remove_route(http::Method method, const vector<string_view>& param_ids) {
         auto it = routes.find(method);
         if (it == routes.end() || !ranges::equal(it->second.param_ids, param_ids)) {
             return false;
@@ -56,4 +56,4 @@ namespace http {
         routes.erase(it);
         return true;
     }
-} // namespace http
+} // namespace nexora::router

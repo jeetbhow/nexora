@@ -1,6 +1,6 @@
 #pragma once
 
-#include "nexora/http/http.hpp"
+#include "nexora/http/request.hpp"
 
 #include <functional>
 #include <string>
@@ -8,9 +8,9 @@
 #include <unordered_map>
 #include <vector>
 
-namespace http {
+namespace nexora::router {
     struct Route {
-        std::function<void(Request&)> handler;
+        std::function<void(http::Request&)> handler;
         std::vector<std::string> param_ids;
     };
 
@@ -31,8 +31,8 @@ namespace http {
         const Node* get_child(const std::string& key) const;
         Node* get_child(const std::string& key);
 
-        const Route* get_route(Method method) const;
-        bool try_remove_route(Method method, const std::vector<std::string_view>& param_ids);
+        const Route* get_route(http::Method method) const;
+        bool try_remove_route(http::Method method, const std::vector<std::string_view>& param_ids);
 
     private:
         friend class Router;
@@ -41,6 +41,6 @@ namespace http {
         std::string key = "";
         Node* parent = nullptr;
         std::unordered_map<std::string, Node> children{};
-        std::unordered_map<Method, Route> routes;
+        std::unordered_map<http::Method, Route> routes;
     };
-}; // namespace http
+}; // namespace nexora::router

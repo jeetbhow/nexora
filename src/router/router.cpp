@@ -8,7 +8,7 @@
 
 using namespace std;
 
-namespace http {
+namespace nexora::router {
     static auto segments(string_view path) {
         return path.substr(1) | views::split('/') | views::transform([](auto part) {
                    return string_view(part.begin(), part.end());
@@ -58,7 +58,7 @@ namespace http {
         return result;
     }
 
-    void Router::add(Method method, string_view path, function<void(Request&)> handler) {
+    void Router::add(http::Method method, string_view path, function<void(http::Request&)> handler) {
         if (!valid_pattern(path)) {
             return;
         }
@@ -91,7 +91,7 @@ namespace http {
         }
     }
 
-    bool Router::contains(Method method, string_view path) const {
+    bool Router::contains(http::Method method, string_view path) const {
         auto [node, param_ids] = find_pattern(&root_, path);
         if (!node) {
             return false;
@@ -101,7 +101,7 @@ namespace http {
         return route && ranges::equal(route->param_ids, param_ids);
     }
 
-    void Router::remove(Method method, string_view path) {
+    void Router::remove(http::Method method, string_view path) {
         auto [node, param_ids] = find_pattern(&root_, path);
         if (!node || !node->try_remove_route(method, param_ids)) {
             return;
@@ -119,7 +119,7 @@ namespace http {
         }
     }
 
-    optional<MatchResult> Router::match(Method method, string_view target) const {
+    optional<MatchResult> Router::match(http::Method method, string_view target) const {
         if (!valid_path(target)) {
             return nullopt;
         }
@@ -135,7 +135,7 @@ namespace http {
 
     const Node* Router::match(
         const Node* node,
-        Method method,
+        http::Method method,
         string_view target,
         vector<string>& param_vals
     ) {
@@ -151,7 +151,7 @@ namespace http {
         string_view key = target.substr(0, pos);
         string_view remain = pos != string_view::npos ? target.substr(pos + 1) : "";
 
-        const Node* child = get_or_default(node->children, string(key), nullptr);
+        const Node* child = http::get_or_default(node->children, string(key), nullptr);
 
         if (child && child->type == NodeType::Path) {
             if (const Node* matched = match(child, method, remain, param_vals)) {
@@ -162,7 +162,7 @@ namespace http {
         param_vals.push_back(string(key));
 
         const Node* matched = match(
-            get_or_default(node->children, string(":"), nullptr),
+            http::get_or_default(node->children, string(":"), nullptr),
             method,
             remain,
             param_vals
@@ -173,7 +173,7 @@ namespace http {
 
         param_vals.pop_back();
 
-        const Node* wildcard = get_or_default(node->children, string("*"), nullptr);
+        const Node* wildcard = http::get_or_default(node->children, string("*"), nullptr);
         if (wildcard && wildcard->routes.contains(method)) {
             return wildcard;
         }
@@ -185,4 +185,4 @@ namespace http {
         return path.starts_with('/') && !path.contains("//") &&
                (path.size() == 1 || !path.ends_with('/'));
     }
-} // namespace http
+} // namespace nexora::router

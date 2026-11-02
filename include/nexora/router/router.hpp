@@ -10,7 +10,7 @@
 
 class RouterTest;
 
-namespace http {
+namespace nexora::router {
     class Router {
     public:
         Router() = default;
@@ -19,10 +19,10 @@ namespace http {
         Router(const Router&) = delete;
         Router& operator=(const Router&) = delete;
 
-        void add(Method method, std::string_view path, std::function<void(Request&)> handler);
-        void remove(Method method, std::string_view path);
-        bool contains(Method method, std::string_view path) const;
-        std::optional<MatchResult> match(Method method, std::string_view target) const;
+        void add(http::Method method, std::string_view path, std::function<void(http::Request&)> handler);
+        void remove(http::Method method, std::string_view path);
+        bool contains(http::Method method, std::string_view path) const;
+        std::optional<MatchResult> match(http::Method method, std::string_view target) const;
 
         size_t size() const { return size_; }
 
@@ -31,7 +31,7 @@ namespace http {
 
         static const Node* match(
             const Node* node,
-            Method method,
+            http::Method method,
             std::string_view target,
             std::vector<std::string>& param_vals
         );
@@ -43,4 +43,4 @@ namespace http {
     };
 
     bool valid_path(std::string_view path);
-} // namespace http
+} // namespace nexora::router

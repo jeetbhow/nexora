@@ -6,7 +6,7 @@
 #include <utility>
 #include <vector>
 
-namespace http {
+namespace nexora::http {
     struct Headers {
         /**
          * @brief Header fields, in the order they appeared in the request.
@@ -81,4 +81,4 @@ namespace http {
          */
         void remove(std::string_view name);
     };
-} // namespace http
+} // namespace nexora::http

@@ -10,42 +10,7 @@
 #include <utility>
 #include <vector>
 
-namespace http {
-    /**
-     * @brief Optional whitespace: the characters HTTP allows around field
-     *        values and other tokens.
-     *
-     * OWS = *( SP / HTAB ) (RFC 9110 §5.6.3)
-     */
-    inline constexpr std::string_view ows = " \t";
-
-    /**
-     * @brief Compares two strings, ignoring ASCII case.
-     *
-     * Only the letters A-Z and a-z are folded, so non-ASCII bytes must match
-     * exactly. Strings of different lengths are never equal. Used for header
-     * field names, which are case-insensitive (RFC 9110 §5.1).
-     *
-     * @param a The first string, e.g. "Content-Type".
-     * @param b The second string, e.g. "content-type".
-     * @return `true` if the strings are equal apart from ASCII case.
-     */
-    bool case_insensitive_equals(std::string_view a, std::string_view b);
-
-    /**
-     * @brief Removes leading and trailing whitespace.
-     *
-     * Only spaces and tabs (`ows`) are removed. CR, LF and other whitespace
-     * are kept, so a stray line ending is still visible to the caller.
-     *
-     * @param s The string to trim, e.g. "  text/html\t".
-     * @return A view into `s` without the surrounding spaces and tabs, e.g.
-     *         "text/html", or an empty view if `s` is all spaces and tabs.
-     *         The view refers to the same characters as `s`, so it must not
-     *         outlive them.
-     */
-    std::string_view trim(std::string_view s);
-
+namespace nexora::http {
     /**
      * @brief Splits a string at the first occurrence of a delimiter.
      *
@@ -179,4 +144,4 @@ namespace http {
         auto it = map.find(key);
         return it != map.end() ? &it->second : default_value;
     }
-} // namespace http
+} // namespace nexora::http

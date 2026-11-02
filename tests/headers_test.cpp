@@ -1,9 +1,9 @@
-#include "nexora/http/http.hpp"
+#include "nexora/http/headers.hpp"
 
 #include <gtest/gtest.h>
 
 using namespace std;
-using namespace http;
+using namespace nexora::http;
 
 TEST(Headers, NulloptOnNonExistentHeader) {
     Headers h;

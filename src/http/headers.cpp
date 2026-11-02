@@ -1,5 +1,5 @@
 #include "nexora/http/headers.hpp"
-#include "nexora/utils.hpp"
+#include "nexora/http/http.h"
 
 #include <ranges>
 #include <string>
@@ -7,7 +7,7 @@
 
 using namespace std;
 
-namespace http {
+namespace nexora::http {
     optional<string> Headers::get(string_view name) const {
         vector<string> values = get_all(name);
         if (values.empty()) {
@@ -40,4 +40,4 @@ namespace http {
             return case_insensitive_equals(name, p.first);
         });
     }
-} // namespace http
+} // namespace nexora::http

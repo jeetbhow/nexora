@@ -1,11 +1,12 @@
 #include "nexora/app.hpp"
-#include "nexora/http/http.hpp"
+#include "nexora/http/request.hpp"
 
 #include <format>
 #include <iostream>
 
 using namespace std;
-using namespace http;
+using namespace nexora::http;
+using namespace nexora;
 
 int main() {
     App app{};

@@ -2,6 +2,7 @@ lib_sources = files(
     'app.cpp',
     'http/headers.cpp',
     'http/http.cpp',
+    'http/request.cpp',
     'utils.cpp',
     'router/router.cpp',
     'router/node.cpp'

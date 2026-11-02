@@ -1,8 +1,22 @@
-#include "nexora/http/http.hpp"
+#include "nexora/http/request.hpp"
 #include <gtest/gtest.h>
 
 using namespace std;
-using namespace http;
+using namespace nexora::http;
+
+TEST(StatusToString, ReturnsReasonPhraseWithoutNumericCode) {
+    EXPECT_EQ(to_string(Status::Ok), "OK");
+    EXPECT_EQ(to_string(Status::NotFound), "Not Found");
+    EXPECT_EQ(to_string(Status::InternalServerError), "Internal Server Error");
+}
+
+TEST(StatusToString, PreservesPunctuationAndAcronyms) {
+    EXPECT_EQ(to_string(Status::NonAuthoritativeInformation), "Non-Authoritative Information");
+    EXPECT_EQ(to_string(Status::MultiStatus), "Multi-Status");
+    EXPECT_EQ(to_string(Status::ImUsed), "IM Used");
+    EXPECT_EQ(to_string(Status::UriTooLong), "URI Too Long");
+    EXPECT_EQ(to_string(Status::HttpVersionNotSupported), "HTTP Version Not Supported");
+}
 
 TEST(RequestLine, ParsesMethodTargetAndVersion) {
     string request = "GET /users/42 HTTP/1.1\r\n"

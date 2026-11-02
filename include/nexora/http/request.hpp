@@ -63,14 +63,14 @@ namespace nexora::http {
          *       "query": {
          *         "sort": "asc"
          *       },
-         *       "headers": [
-         *         ["Host", "example.com"]
-         *       ],
+         *       "headers": {
+         *         "Host": "example.com"
+         *       },
          *       "body": "hello"
          *     }
          *
-         * `headers` is an array of `[name, value]` pairs in the order they
-         * appeared, so duplicate fields are kept. Strings are escaped with
+         * `headers` is an object keyed by field name; its order is
+         * unspecified. Strings are escaped with
          * `json_quote`, so the output is only valid JSON if the request's
          * strings are valid UTF-8.
          *
@@ -93,7 +93,7 @@ namespace nexora::http {
      *
      * Fails with:
      * - `ParseError::BadRequest` if the request line or a header line is
-     *   malformed, a query parameter has a bad `%XX` escape,
+     *   malformed, a header field appears more than once, a query parameter has a bad `%XX` escape,
      *   `Content-Length` is invalid, or the body is shorter than
      *   `Content-Length` says;
      * - `ParseError::UnsupportedMethod` if the method isn't one of `Method`;

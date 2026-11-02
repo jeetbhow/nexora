@@ -41,7 +41,8 @@ namespace nexora::http {
         result += field("version", json_quote(http::to_string(version)));
         result += field("params", indent(http::to_string(params)));
         result += field("query", indent(http::to_string(query_params)));
-        result += field("headers", indent(http::to_string(headers.fields)));
+        result += field("headers", indent(http::to_string(unordered_map<string, string>(
+                                 headers.fields.begin(), headers.fields.end()))));
         result += "  \"body\": " + json_quote(body) + "\n}";
         return result;
     }
@@ -78,7 +79,10 @@ namespace nexora::http {
                 return unexpected(ParseError::BadRequest);
             }
 
-            headers.add(string(name), string(value));
+            // Duplicate fields aren't supported.
+            if (!headers.add(string(name), string(value))) {
+                return unexpected(ParseError::BadRequest);
+            }
         }
 
         return headers;

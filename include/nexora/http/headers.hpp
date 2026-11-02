@@ -1,31 +1,37 @@
 #pragma once
 
+#include <cstddef>
 #include <optional>
 #include <string>
 #include <string_view>
-#include <utility>
-#include <vector>
+#include <unordered_map>
 
 namespace nexora::http {
+    /// Hashes a field name, ignoring ASCII case.
+    struct HeaderNameHash {
+        using is_transparent = void;
+        size_t operator()(std::string_view name) const;
+    };
+
+    /// Compares field names, ignoring ASCII case.
+    struct HeaderNameEqual {
+        using is_transparent = void;
+        bool operator()(std::string_view a, std::string_view b) const;
+    };
+
     struct Headers {
         /**
-         * @brief Header fields, in the order they appeared in the request.
+         * @brief Header fields, keyed by name.
          *
-         * Stored as a `std::vector` rather than an `std::unordered_map` because
-         * headers can have duplicates.
+         * Names are compared case-insensitively. There is one entry per name,
+         * so duplicate fields are not allowed. Iteration order is unspecified.
          */
-        std::vector<std::pair<std::string, std::string>> fields;
+        std::unordered_map<std::string, std::string, HeaderNameHash, HeaderNameEqual> fields;
 
         /**
          * @brief Looks up the value of a header field.
          *
-         * Names are compared case-insensitively. If the field appears more
-         * than once, the values are joined with ", " in the order they
-         * appeared, e.g. `Accept: a` and `Accept: b` give "a, b"
-         * (RFC 9110 §5.3).
-         *
-         * Joining is wrong for fields whose values may contain commas, such
-         * as `Set-Cookie`; use `get_all()` for those.
+         * Names are compared case-insensitively.
          *
          * @param name The field name, e.g. "Content-Type".
          * @return The field's value, or `std::nullopt` if no field has that
@@ -37,7 +43,7 @@ namespace nexora::http {
          * @brief Looks up the value of a header field. Same as `get()`.
          *
          * Read-only: unlike `std::map::operator[]`, this never inserts a
-         * field. Use `add()` to insert one.
+         * field. Use `add()` or `set()` to insert one.
          *
          * @param name The field name, e.g. "Content-Type".
          * @return The field's value, or `std::nullopt` if no field has that
@@ -48,31 +54,28 @@ namespace nexora::http {
         }
 
         /**
-         * @brief Looks up every value of a header field.
+         * @brief Adds a header field.
          *
-         * Names are compared case-insensitively. Each occurrence is returned
-         * as a separate value, without joining.
+         * Duplicates are not allowed: if a field with the same name exists
+         * (ignoring case), nothing changes. Use `set()` to replace a value.
          *
-         * @param name The field name, e.g. "Set-Cookie".
-         * @return The field's values in the order they appeared, or an empty
-         *         vector if no field has that name.
+         * @param name  The field name.
+         * @param value The field value.
+         * @return `true` if the field was added, `false` if one with that
+         *         name already exists.
          */
-        std::vector<std::string> get_all(std::string_view name) const;
+        bool add(std::string name, std::string value);
 
         /**
-         * @brief Appends a header field.
-         *
-         * Existing fields with the same name are kept, so this can add
-         * duplicates (e.g. multiple `Set-Cookie` fields). To replace a field,
-         * call `remove()` first.
+         * @brief Sets a header field, replacing any existing value.
          *
          * @param name  The field name.
          * @param value The field value.
          */
-        void add(std::string name, std::string value);
+        void set(std::string name, std::string value);
 
         /**
-         * @brief Removes every header field with the given name.
+         * @brief Removes the header field with the given name.
          *
          * Names are compared case-insensitively. Does nothing if no field has
          * that name.

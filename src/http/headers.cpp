@@ -1,43 +1,47 @@
 #include "nexora/http/headers.hpp"
 #include "nexora/http/http.h"
 
-#include <ranges>
+#include <cctype>
+#include <functional>
 #include <string>
 #include <string_view>
 
 using namespace std;
 
 namespace nexora::http {
+    size_t HeaderNameHash::operator()(string_view name) const {
+        string lower(name);
+        for (char& c : lower) {
+            c = static_cast<char>(tolower(static_cast<unsigned char>(c)));
+        }
+        return hash<string>{}(lower);
+    }
+
+    bool HeaderNameEqual::operator()(string_view a, string_view b) const {
+        return case_insensitive_equals(a, b);
+    }
+
     optional<string> Headers::get(string_view name) const {
-        vector<string> values = get_all(name);
-        if (values.empty()) {
+        auto it = fields.find(name);
+        if (it == fields.end()) {
             return nullopt;
         }
 
-        return ranges::to<string>(values | views::join_with(", "sv));
+        return it->second;
     }
 
-    vector<string> Headers::get_all(string_view name) const {
-        vector<string> result;
-
-        for (const auto& [key, val] : fields) {
-            if (!case_insensitive_equals(key, name)) {
-                continue;
-            }
-
-            result.push_back(val);
-        }
-
-        return result;
+    bool Headers::add(string name, string value) {
+        return fields.try_emplace(std::move(name), std::move(value)).second;
     }
 
-    void Headers::add(string name, string value) {
-        fields.emplace_back(std::move(name), std::move(value));
+    void Headers::set(string name, string value) {
+        fields.insert_or_assign(std::move(name), std::move(value));
     }
 
     void Headers::remove(string_view name) {
-        erase_if(fields, [name](const pair<string, string>& p) {
-            return case_insensitive_equals(name, p.first);
-        });
+        auto it = fields.find(name);
+        if (it != fields.end()) {
+            fields.erase(it);
+        }
     }
 } // namespace nexora::http

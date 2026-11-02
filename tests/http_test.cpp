@@ -165,19 +165,16 @@ TEST(HeaderFields, NoHeaderFields) {
     EXPECT_TRUE(r->headers.fields.empty());
 }
 
-TEST(HeaderFields, PreservesDuplicatesInOrder) {
+TEST(HeaderFields, DuplicatesAreRejected) {
     string request = "GET / HTTP/1.1\r\n"
                      "Accept: application/json\r\n"
                      "Host: example.com\r\n"
-                     "Accept: text/html\r\n"
+                     "accept: text/html\r\n"
                      "\r\n";
 
     auto r = parse_request(request);
-    ASSERT_TRUE(r.has_value());
-
-    EXPECT_EQ(
-        r->headers.get_all("Accept"), (vector<string>{"application/json", "text/html"})
-    );
+    ASSERT_FALSE(r.has_value());
+    EXPECT_EQ(r.error(), ParseError::BadRequest);
 }
 
 TEST(HeaderFields, ValueMayContainColon) {

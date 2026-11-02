@@ -58,7 +58,7 @@ namespace nexora::router {
         return result;
     }
 
-    void Router::add(http::Method method, string_view path, function<void(http::Request&)> handler) {
+    void Router::add(http::Method method, string_view path, function<void(http::Request&, http::Response&)> handler) {
         if (!valid_pattern(path)) {
             return;
         }

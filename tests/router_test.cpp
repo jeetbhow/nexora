@@ -10,7 +10,7 @@
 using namespace nexora::http;
 using namespace nexora::router;
 
-const auto noop = [](Request&) {};
+const auto noop = [](Request&, Response&) {};
 
 class RouterTest : public testing::Test {
 protected:
@@ -460,13 +460,14 @@ TEST_F(RouterTest, MatchResultForStaticRouteHasNoCaptures) {
 
 TEST_F(RouterTest, MatchResultRunsTheRegisteredHandler) {
     int calls = 0;
-    router.add(Method::Get, "/a", [&](Request&) { ++calls; });
+    router.add(Method::Get, "/a", [&](Request&, Response&) { ++calls; });
 
     auto result = router.match(Method::Get, "/a");
 
     ASSERT_TRUE(result.has_value());
     Request req;
-    result->route->handler(req);
+    Response res{};
+    result->route->handler(req, res);
     EXPECT_EQ(calls, 1);
 }
 

@@ -19,7 +19,7 @@ namespace nexora::router {
         Router(const Router&) = delete;
         Router& operator=(const Router&) = delete;
 
-        void add(http::Method method, std::string_view path, std::function<void(http::Request&)> handler);
+        void add(http::Method method, std::string_view path, std::function<void(http::Request&, http::Response&)> handler);
         void remove(http::Method method, std::string_view path);
         bool contains(http::Method method, std::string_view path) const;
         std::optional<MatchResult> match(http::Method method, std::string_view target) const;

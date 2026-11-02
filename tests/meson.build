@@ -1,6 +1,7 @@
 gtest_dep = dependency('gtest', main: true, fallback: ['gtest', 'gtest_main_dep'])
 
 test_sources = files(
+    'app_test.cpp',
     'http_test.cpp',
     'headers_test.cpp',
     'response_test.cpp',

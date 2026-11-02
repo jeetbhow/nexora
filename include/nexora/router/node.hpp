@@ -1,6 +1,7 @@
 #pragma once
 
 #include "nexora/http/request.hpp"
+#include "nexora/http/response.hpp"
 
 #include <functional>
 #include <string>
@@ -10,7 +11,7 @@
 
 namespace nexora::router {
     struct Route {
-        std::function<void(http::Request&)> handler;
+        std::function<void(http::Request&, http::Response&)> handler;
         std::vector<std::string> param_ids;
     };
 

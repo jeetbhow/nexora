@@ -40,6 +40,3 @@ meson test -C build
 - [ ] Middleware
 - [ ] Server
 - [ ] Polish
-
-See [docs/tasks.md](docs/tasks.md) for the detailed checklist and
-[docs/design.md](docs/design.md) for current behavior and the planned framework.

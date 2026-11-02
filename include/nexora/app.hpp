@@ -22,6 +22,8 @@ namespace nexora {
         // Route a request to its matching handler and run it.
         void route(Method method, std::string_view target);
 
+        void listen(int port);
+
     private:
         Router router;
     };

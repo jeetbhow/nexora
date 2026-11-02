@@ -1,5 +1,6 @@
 #include "nexora/app.hpp"
 #include "nexora/http/request.hpp"
+#include "nexora/server/server.hpp"
 
 #include <utility>
 
@@ -44,9 +45,11 @@ namespace nexora {
 
         auto req = Request{};
         req.method = method;
+        
         auto res = Response{};
         res.version = req.version;
         res.status = Status::Ok;
+        
         for (size_t i = 0; i < result->param_vals.size(); i++) {
             const string& key = result->route->param_ids[i];
             const string& val = result->param_vals[i];
@@ -54,6 +57,11 @@ namespace nexora {
         }
 
         result->route->handler(req, res);
+    }
+
+    void App::listen(int port) {
+        Server s;
+        s.listen(port);
     }
 
 } // namespace nexora

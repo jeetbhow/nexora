@@ -4,6 +4,7 @@
 # Meson wrap downloads (keep the .wrap files)
 /subprojects/packagecache/
 /subprojects/googletest-*/
+/subprojects/nlohmann_json-*/
 /subprojects/.wraplock
 
 # Symlink to build/compile_commands.json for clangd

@@ -2,7 +2,7 @@
 
 using namespace std;
 
-namespace nexora::http {
+namespace nexora {
     optional<pair<string_view, string_view>> split_once(string_view s, char delim) {
         size_t pos = s.find(delim);
         if (pos == string_view::npos) {
@@ -93,4 +93,4 @@ namespace nexora::http {
         result += "\n]";
         return result;
     }
-} // namespace nexora::http
+} // namespace nexora

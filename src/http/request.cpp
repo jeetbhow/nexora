@@ -8,7 +8,7 @@
 
 using namespace std;
 
-namespace nexora::http {
+namespace nexora {
     optional<string> Request::query(const string& name) const {
         auto it = query_params.find(name);
 
@@ -36,12 +36,12 @@ namespace nexora::http {
         };
 
         string result = "{\n";
-        result += field("method", json_quote(http::to_string(method)));
+        result += field("method", json_quote(nexora::to_string(method)));
         result += field("path", json_quote(path));
-        result += field("version", json_quote(http::to_string(version)));
-        result += field("params", indent(http::to_string(params)));
-        result += field("query", indent(http::to_string(query_params)));
-        result += field("headers", indent(http::to_string(unordered_map<string, string>(
+        result += field("version", json_quote(nexora::to_string(version)));
+        result += field("params", indent(nexora::to_string(params)));
+        result += field("query", indent(nexora::to_string(query_params)));
+        result += field("headers", indent(nexora::to_string(unordered_map<string, string>(
                                  headers.fields.begin(), headers.fields.end()))));
         result += "  \"body\": " + json_quote(body) + "\n}";
         return result;
@@ -293,4 +293,4 @@ namespace nexora::http {
 
         return r;
     }
-} // namespace nexora::http
+} // namespace nexora

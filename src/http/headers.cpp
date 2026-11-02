@@ -8,7 +8,7 @@
 
 using namespace std;
 
-namespace nexora::http {
+namespace nexora {
     size_t HeaderNameHash::operator()(string_view name) const {
         string lower(name);
         for (char& c : lower) {
@@ -44,4 +44,4 @@ namespace nexora::http {
             fields.erase(it);
         }
     }
-} // namespace nexora::http
+} // namespace nexora

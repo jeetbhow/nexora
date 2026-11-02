@@ -9,7 +9,7 @@
 #include <string_view>
 #include <unordered_map>
 
-namespace nexora::http {
+namespace nexora {
     /**
      * @brief A parsed HTTP request.
      */
@@ -105,4 +105,4 @@ namespace nexora::http {
      * @return The parsed request, or the reason it couldn't be parsed.
      */
     std::expected<Request, ParseError> parse_request(std::string_view request);
-} // namespace nexora::http
+} // namespace nexora

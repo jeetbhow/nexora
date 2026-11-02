@@ -6,7 +6,7 @@
 
 using namespace std;
 
-namespace nexora::http {
+namespace nexora {
     optional<Method> parse_method(string_view s) {
         // Methods are case-sensitive (RFC 9110 §9.1), so "get" is not GET.
         if (s == "GET")
@@ -224,4 +224,4 @@ namespace nexora::http {
         return s.substr(first, last - first + 1);
     }
 
-} // namespace nexora::http
+} // namespace nexora

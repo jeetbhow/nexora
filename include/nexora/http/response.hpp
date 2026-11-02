@@ -6,9 +6,9 @@
 
 #include <string>
 
-namespace nexora::http {
+namespace nexora {
     struct Response {
-        http::Version version = Version::Http11;
+        Version version = Version::Http11;
         Status status = Status::Ok;
         Headers headers;
         std::string body; 
@@ -19,4 +19,4 @@ namespace nexora::http {
         void send(Status status, const nlohmann::json& body);
         void json(Status status, nlohmann::json body);
     };
-} // namespace nexora::http
+} // namespace nexora

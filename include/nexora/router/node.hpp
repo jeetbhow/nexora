@@ -9,9 +9,9 @@
 #include <unordered_map>
 #include <vector>
 
-namespace nexora::router {
+namespace nexora {
     struct Route {
-        std::function<void(http::Request&, http::Response&)> handler;
+        std::function<void(Request&, Response&)> handler;
         std::vector<std::string> param_ids;
     };
 
@@ -32,8 +32,8 @@ namespace nexora::router {
         const Node* get_child(const std::string& key) const;
         Node* get_child(const std::string& key);
 
-        const Route* get_route(http::Method method) const;
-        bool try_remove_route(http::Method method, const std::vector<std::string_view>& param_ids);
+        const Route* get_route(Method method) const;
+        bool try_remove_route(Method method, const std::vector<std::string_view>& param_ids);
 
     private:
         friend class Router;
@@ -42,6 +42,6 @@ namespace nexora::router {
         std::string key = "";
         Node* parent = nullptr;
         std::unordered_map<std::string, Node> children{};
-        std::unordered_map<http::Method, Route> routes;
+        std::unordered_map<Method, Route> routes;
     };
-}; // namespace nexora::router
+}; // namespace nexora

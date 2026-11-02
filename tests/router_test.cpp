@@ -7,8 +7,7 @@
 #include <utility>
 #include <vector>
 
-using namespace nexora::http;
-using namespace nexora::router;
+using namespace nexora;
 
 const auto noop = [](Request&, Response&) {};
 

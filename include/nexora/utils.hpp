@@ -10,7 +10,7 @@
 #include <utility>
 #include <vector>
 
-namespace nexora::http {
+namespace nexora {
     /**
      * @brief Splits a string at the first occurrence of a delimiter.
      *
@@ -144,4 +144,4 @@ namespace nexora::http {
         auto it = map.find(key);
         return it != map.end() ? &it->second : default_value;
     }
-} // namespace nexora::http
+} // namespace nexora

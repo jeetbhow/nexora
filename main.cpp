@@ -7,7 +7,6 @@
 #include <print>
 
 using namespace std;
-using namespace nexora::http;
 using namespace nexora;
 
 int main() {

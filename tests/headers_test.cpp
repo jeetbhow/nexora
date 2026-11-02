@@ -3,7 +3,7 @@
 #include <gtest/gtest.h>
 
 using namespace std;
-using namespace nexora::http;
+using namespace nexora;
 
 TEST(Headers, NulloptOnNonExistentHeader) {
     Headers h;

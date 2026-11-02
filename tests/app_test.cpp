@@ -3,7 +3,6 @@
 #include <gtest/gtest.h>
 
 using namespace nexora;
-using namespace nexora::http;
 
 TEST(App, UnmatchedRoutesDoNotInvokeHandler) {
     App app;

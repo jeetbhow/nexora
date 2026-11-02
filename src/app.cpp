@@ -4,10 +4,9 @@
 #include <utility>
 
 using namespace std;
-using namespace nexora::http;
 
 namespace nexora {
-    using Handler = std::function<void(http::Request&, http::Response&)>;
+    using Handler = std::function<void(Request&, Response&)>;
 
     void App::get(std::string_view path, Handler handler) {
         router.add(Method::Get, path, std::move(handler));
@@ -37,8 +36,8 @@ namespace nexora {
         router.add(Method::Options, path, std::move(handler));
     }
 
-    void App::route(http::Method method, std::string_view target) {
-        optional<router::MatchResult> result = router.match(method, target);
+    void App::route(Method method, std::string_view target) {
+        optional<MatchResult> result = router.match(method, target);
         if (!result) {
             return;
         }

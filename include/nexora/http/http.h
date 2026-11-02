@@ -3,7 +3,7 @@
 #include <optional>
 #include <string_view>
 
-namespace nexora::http {
+namespace nexora {
     /**
      * @brief HTTP request methods supported by the server.
      *
@@ -171,4 +171,4 @@ namespace nexora::http {
      */
     std::string_view trim(std::string_view s);
 
-} // namespace nexora::http
+} // namespace nexora

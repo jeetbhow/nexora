@@ -6,7 +6,7 @@
 #include <string_view>
 #include <unordered_map>
 
-namespace nexora::http {
+namespace nexora {
     /// Hashes a field name, ignoring ASCII case.
     struct HeaderNameHash {
         using is_transparent = void;
@@ -84,4 +84,4 @@ namespace nexora::http {
          */
         void remove(std::string_view name);
     };
-} // namespace nexora::http
+} // namespace nexora

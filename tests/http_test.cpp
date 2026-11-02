@@ -2,7 +2,7 @@
 #include <gtest/gtest.h>
 
 using namespace std;
-using namespace nexora::http;
+using namespace nexora;
 
 TEST(StatusToString, ReturnsReasonPhraseWithoutNumericCode) {
     EXPECT_EQ(to_string(Status::Ok), "OK");

@@ -6,7 +6,7 @@
 
 using namespace std;
 
-namespace nexora::http {
+namespace nexora {
     std::string Response::serialize() {
         string s;
         s += format("{} {} {}\r\n", to_string(version), static_cast<int>(status), to_string(status));
@@ -39,4 +39,4 @@ namespace nexora::http {
         string res_str = serialize();
         println("{}", res_str);
     }
-} // namespace nexora::http
+} // namespace nexora

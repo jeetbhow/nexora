@@ -31,12 +31,10 @@ meson test -C build
 
 ## Roadmap
 
-- [ ] Request parsing — request line, headers, body, and query parameters complete;
-  path percent-decoding remains
-- [ ] Router — static, parameter, and terminal wildcard matching complete;
-  public match results and wildcard captures remain
-- [ ] Response
-- [ ] Route registration
+- [ ] Request parsing — request line, headers, body, and query parameters complete
+- [ ] Router — static, parameter, and terminal wildcard matching complete
+- [x] Response
+- [x] Route registration
 - [ ] Middleware
-- [ ] Server
+- [ ] Server — socket binding and listening complete
 - [ ] Polish

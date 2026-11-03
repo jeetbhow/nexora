@@ -1,8 +1,8 @@
 # Nexora
 
 An HTTP framework for C++23 in the style of Express.js, built on raw POSIX
-sockets and epoll with no dependencies beyond the standard library. It is a
-work in progress; see the roadmap below.
+sockets and epoll with minimal dependencies. It is a work in progress; see the
+roadmap below.
 
 ## Building
 
